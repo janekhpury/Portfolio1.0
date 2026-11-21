@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hamster Slide - Jeu d'Arcade 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Fredoka', 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            background: linear-gradient(180deg, #38bdf8 0%, #bae6fd 100%);
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+        }
+        .hud-pill {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+        }
+        .btn-arcade {
+            transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease;
+        }
+        .btn-arcade:hover {
+            transform: translateY(-3px) scale(1.03);
+        }
+        .btn-arcade:active {
+            transform: translateY(2px) scale(0.97);
+        }
+        @keyframes pulse-fast {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .boost-active {
+            animation: pulse-fast 0.4s infinite;
+            border-color: #facc15 !important;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.7);
+        }
+        /* Effet de lignes de vitesse sur les bords de l'écran */
+        #speed-vignette {
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 58%, rgba(255, 255, 255, 0.35) 100%);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <!-- Vignette de vitesse -->
+    <div id="speed-vignette" class="fixed inset-0 z-10"></div>
+
+    <!-- HUD Supérieur (Visible en jeu) -->
+    <div id="hud" class="hidden fixed top-0 left-0 right-0 z-20 p-3 sm:p-5 pointer-events-none flex flex-col gap-3">
+        <!-- Barre de progression vers la ligne d'arrivée -->
+        <div class="w-full max-w-2xl mx-auto hud-pill rounded-full p-2 px-4 flex items-center gap-3 shadow-lg">
+            <span class="text-white text-xs sm:text-sm font-bold tracking-wider uppercase whitespace-nowrap">Départ</span>
+            <div class="relative flex-1 h-4 bg-slate-800/80 rounded-full overflow-visible border border-white/20">
+                <div id="progress-fill" class="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 rounded-full transition-all duration-75" style="width: 0%;"></div>
+                <!-- Icône Hamster sur la barre -->
+                <div id="progress-hamster" class="absolute -top-2.5 -ml-3.5 text-xl transition-all duration-75 drop-shadow" style="left: 0%;">🐹</div>
+            </div>
+            <span class="text-white text-lg" title="Arrivée">🏁</span>
+        </div>
+
+        <!-- Compteurs : Graines, Temps, Vitesse/Statut -->
+        <div class="w-full max-w-4xl mx-auto flex justify-between items-center gap-2">
+            <!-- Graines de tournesol -->
+            <div class="hud-pill rounded-2xl px-4 py-2 flex items-center gap-2.5 text-white shadow-md">
+                <span class="text-2xl">🌻</span>
+                <div>
+                    <div class="text-[10px] uppercase tracking-wider text-amber-300 font-bold">Graines</div>
+                    <div id="hud-seeds" class="text-lg sm:text-xl font-bold leading-none">0</div>
+                </div>
+            </div>
+
+            <!-- Badge statut (Turbo / Gluant) -->
+            <div id="status-badge" class="hidden px-4 py-1.5 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider shadow-lg transition-all">
+                ⚡ TURBO !
+            </div>
+
+            <!-- Chronomètre & Son -->
+            <div class="flex items-center gap-2 pointer-events-auto">
+                <div class="hud-pill rounded-2xl px-4 py-2 flex items-center gap-2.5 text-white shadow-md">
+                    <span class="text-xl">⏱️</span>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wider text-sky-300 font-bold">Temps</div>
+                        <div id="hud-time" class="text-lg sm:text-xl font-bold leading-none">00.0s</div>
+                    </div>
+                </div>
+                <button id="btn-mute" class="hud-pill rounded-2xl p-3 text-white hover:bg-slate-800/80 transition cursor-pointer" title="Activer/Couper le son">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contrôles tactiles mobiles (bas de l'écran) -->
+    <div id="mobile-controls" class="hidden fixed bottom-5 left-0 right-0 z-20 px-5 flex justify-between items-end pointer-events-none md:hidden">
+        <div class="flex gap-3 pointer-events-auto">
+            <button id="touch-left" class="w-16 h-16 rounded-2xl bg-white/80 active:bg-amber-400 border-2 border-white shadow-xl flex items-center justify-center text-3xl font-bold text-slate-800">
+                ◀
+            </button>
+            <button id="touch-right" class="w-16 h-16 rounded-2xl bg-white/80 active:bg-amber-400 border-2 border-white shadow-xl flex items-center justify-center text-3xl font-bold text-slate-800">
+                ▶
+            </button>
+        </div>
+        <button id="touch-jump" class="pointer-events-auto h-16 px-6 rounded-2xl bg-gradient-to-b from-amber-400 to-orange-500 active:scale-95 border-2 border-white shadow-xl flex items-center justify-center text-lg font-bold text-white uppercase tracking-wide">
+            Sauter ⬆️
+        </button>
+    </div>
+
+    <!-- Écran de Démarrage -->
+    <div id="screen-start" class="fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-sm">
+        <div class="glass-panel rounded-3xl max-w-lg w-full p-6 sm:p-8 text-center">
+            <div class="inline-block bg-amber-100 text-amber-700 font-bold text-xs uppercase tracking-widest px-3 py-1 rounded-full mb-2 border border-amber-300">
+                Arcade 3D • Descente Extrême
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-rose-500 drop-shadow-sm mb-2">
+                Hamster Slide 🐹
+            </h1>
+            <p class="text-slate-600 text-sm sm:text-base mb-6">
+                Dévale le toboggan géant suspendu dans les nuages, ramasse un maximum de graines de tournesol et franchis la ligne d'arrivée !
+            </p>
+
+            <!-- Guide rapide -->
+            <div class="grid grid-cols-2 gap-3 text-left bg-sky-50/90 p-4 rounded-2xl border border-sky-200 mb-6 text-xs sm:text-sm">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">⬅️➡️</span>
+                    <div>
+                        <div class="font-bold text-slate-800">Diriger</div>
+                        <div class="text-slate-500">Flèches, Q/D ou Glisser</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">⬆️</span>
+                    <div>
+                        <div class="font-bold text-slate-800">Sauter</div>
+                        <div class="text-slate-500">Espace ou Clic / Tap</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">⚡🌻</span>
+                    <div>
+                        <div class="font-bold text-emerald-700">Bonus</div>
+                        <div class="text-slate-500">Tremplins & Graines</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">🚧🍯</span>
+                    <div>
+                        <div class="font-bold text-rose-600">Dangers</div>
+                        <div class="text-slate-500">Obstacles, vide & miel</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-start" class="btn-arcade w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white font-bold text-xl sm:text-2xl shadow-lg shadow-orange-500/30 border-b-4 border-orange-700 cursor-pointer">
+                🚀 C'EST PARTI !
+            </button>
+        </div>
+    </div>
+
+    <!-- Écran Game Over -->
+    <div id="screen-gameover" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="glass-panel rounded-3xl max-w-md w-full p-6 sm:p-8 text-center">
+            <div class="text-6xl mb-2">💥🐹</div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-rose-600 mb-1">Oups ! Game Over</h2>
+            <p id="gameover-reason" class="text-slate-600 font-medium mb-6">Tu as percuté un obstacle sur la piste !</p>
+
+            <div class="grid grid-cols-2 gap-3 bg-slate-100 p-4 rounded-2xl mb-6 border border-slate-200">
+                <div>
+                    <div class="text-xs uppercase font-bold text-slate-400">Distance</div>
+                    <div id="go-distance" class="text-2xl font-bold text-slate-800">0%</div>
+                </div>
+                <div>
+                    <div class="text-xs uppercase font-bold text-slate-400">Graines</div>
+                    <div id="go-seeds" class="text-2xl font-bold text-amber-500">0 🌻</div>
+                </div>
+            </div>
+
+            <button id="btn-retry-go" class="btn-arcade w-full py-4 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 text-white font-bold text-xl shadow-lg shadow-rose-500/30 border-b-4 border-rose-700 cursor-pointer">
+                🔄 Rejouer
+            </button>
+        </div>
+    </div>
+
+    <!-- Écran de Victoire -->
+    <div id="screen-victory" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/45 backdrop-blur-sm">
+        <div class="glass-panel rounded-3xl max-w-md w-full p-6 sm:p-8 text-center relative overflow-hidden">
+            <div class="text-6xl mb-2">🏆🐹🎉</div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-emerald-600 mb-1">Arrivée Franchie !</h2>
+            <p class="text-slate-600 font-medium mb-5">Quel champion ! Ton hamster a dompté le toboggan géant !</p>
+
+            <div class="grid grid-cols-3 gap-2 bg-emerald-50/90 p-4 rounded-2xl mb-6 border border-emerald-200">
+                <div>
+                    <div class="text-[11px] uppercase font-bold text-emerald-700">Temps</div>
+                    <div id="win-time" class="text-xl font-bold text-slate-800">00.0s</div>
+                </div>
+                <div>
+                    <div class="text-[11px] uppercase font-bold text-emerald-700">Graines</div>
+                    <div id="win-seeds" class="text-xl font-bold text-amber-500">0</div>
+                </div>
+                <div>
+                    <div class="text-[11px] uppercase font-bold text-emerald-700">Score</div>
+                    <div id="win-score" class="text-xl font-bold text-orange-600">0</div>
+                </div>
+            </div>
+
+            <button id="btn-retry-win" class="btn-arcade w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xl shadow-lg shadow-emerald-500/30 border-b-4 border-emerald-700 cursor-pointer">
+                🎮 Rejouer une partie
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * HAMSTER SLIDE - Jeu d'arcade 3D avec Three.js
+ * Tout le code est autonome et utilise la synthèse Web Audio API pour les bruitages.
+ */
+
+// --- SYSTÈME AUDIO PROCÉDURAL (Sans fichiers externes) ---
+class SoundManager {
+    constructor() {
+        this.ctx = null;
+        this.muted = false;
+    }
+
+    init() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    toggleMute() {
+        this.muted = !this.muted;
+        return this.muted;
+    }
+
+    playJump() {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.22);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+    }
+
+    playSeed() {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(780, now);
+        osc.frequency.setValueAtTime(1046, now + 0.06);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+    }
+
+    playBoost() {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(950, now + 0.35);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+    }
+
+    playSticky() {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+    }
+
+    playCrash() {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(42, now + 0.45);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+    }
+
+    playWin() {
+        if (this.muted || !this.ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            const t = this.ctx.currentTime + i * 0.11;
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.22, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.35);
+        });
+    }
+}
+
+// --- CONSTANTES & CONFIGURATION DU JEU ---
+const TRACK_WIDTH = 13;          // Largeur totale praticable du toboggan
+const TRACK_LENGTH = 1650;       // Distance jusqu'à la ligne d'arrivée
+const SLOPE_ANGLE = 0.14;        // Inclinaison descendante visuelle (radians)
+const BALL_RADIUS = 0.85;
+const GRAVITY = -38;
+const JUMP_FORCE = 16.5;
+
+// --- VARIABLES GLOBALES ---
+let scene, camera, renderer;
+let worldGroup;                  // Groupe incliné représentant la pente du toboggan
+let ballGroup, outerBall, hamsterGroup, leftLeg, rightLeg;
+let clouds = [];
+let trackEntities = [];          // Obstacles, graines, tremplins, flaques
+let particles = [];              // Particules d'effets visuels
+
+const sound = new SoundManager();
+
+let gameState = 'START';         // 'START', 'PLAYING', 'GAMEOVER', 'VICTORY'
+let clock = new THREE.Clock();
+
+// Physique & état du joueur
+const player = {
+    x: 0,
+    y: BALL_RADIUS,
+    z: 0,                        // Progression le long du toboggan (va vers -TRACK_LENGTH)
+    vx: 0,
+    vy: 0,
+    speed: 44,
+    baseSpeed: 44,
+    maxSpeed: 76,
+    isGrounded: true,
+    fallingOff: false,
+    boostTimer: 0,
+    stickyTimer: 0,
+    seeds: 0,
+    elapsedTime: 0
+};
+
+// Contrôles actifs
+const keys = {
+    left: false,
+    right: false,
+    jump: false
+};
+
+// --- INITIALISATION THREE.JS ---
+function initScene() {
+    const container = document.getElementById('game-container');
+
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x93c5fd, 0.0038);
+
+    camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 450);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // Lumières
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x38bdf8, 0.85);
+    hemiLight.position.set(0, 50, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.0);
+    dirLight.position.set(25, 55, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    dirLight.shadow.camera.near = 5;
+    dirLight.shadow.camera.far = 160;
+    const d = 35;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    scene.add(dirLight);
+
+    // Groupe principal du monde incliné pour donner la sensation de descente vertigineuse
+    worldGroup = new THREE.Group();
+    worldGroup.rotation.x = SLOPE_ANGLE;
+    scene.add(worldGroup);
+
+    buildClouds();
+    buildTrack();
+    buildHamsterBall();
+
+    window.addEventListener('resize', onWindowResize);
+    setupInputs();
+}
+
+// --- CONSTRUCTION DU DÉCOR (NUAGES FLOTTANTS) ---
+function buildClouds() {
+    const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+    const puffGeo = new THREE.SphereGeometry(1, 12, 12);
+
+    for (let i = 0; i < 45; i++) {
+        const cloud = new THREE.Group();
+        const puffs = 3 + Math.floor(Math.random() * 4);
+        for (let p = 0; p < puffs; p++) {
+            const mesh = new THREE.Mesh(puffGeo, cloudMat);
+            const scale = 2.5 + Math.random() * 3.5;
+            mesh.scale.set(scale * 1.4, scale * 0.8, scale);
+            mesh.position.set((p - puffs / 2) * 2.5, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2);
+            cloud.add(mesh);
+        }
+        const side = Math.random() > 0.5 ? 1 : -1;
+        cloud.position.set(
+            side * (18 + Math.random() * 65),
+            -10 + Math.random() * 35,
+            -Math.random() * (TRACK_LENGTH + 150)
+        );
+        worldGroup.add(cloud);
+        clouds.push(cloud);
+    }
+}
+
+// --- TEXTURES PROCÉDURALES POUR LE TOBOGGAN & L'ARRIVÉE ---
+function createSlideTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Fond coloré vif façon toboggan aquatique / parc d'attractions
+    const grad = ctx.createLinearGradient(0, 0, 512, 0);
+    grad.addColorStop(0, '#0284c7');
+    grad.addColorStop(0.15, '#38bdf8');
+    grad.addColorStop(0.5, '#7dd3fc');
+    grad.addColorStop(0.85, '#38bdf8');
+    grad.addColorStop(1, '#0284c7');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Bandes transversales pour accentuer l'impression de vitesse
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.fillRect(0, 0, 512, 48);
+    ctx.fillRect(0, 256, 512, 48);
+
+    // Lignes de couloirs
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fillRect(170, 0, 6, 512);
+    ctx.fillRect(336, 0, 6, 512);
+
+    // Bordures jaune/orange vif
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(0, 0, 24, 512);
+    ctx.fillRect(488, 0, 24, 512);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, TRACK_LENGTH / 18);
+    return tex;
+}
+
+function createCheckerTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    const size = 32;
+    for (let y = 0; y < 128; y += size) {
+        for (let x = 0; x < 256; x += size) {
+            ctx.fillStyle = ((x + y) / size) % 2 === 0 ? '#ffffff' : '#0f172a';
+            ctx.fillRect(x, y, size, size);
+        }
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+}
+
+// --- CONSTRUCTION DU TOBOGGAN GÉANT ---
+function buildTrack() {
+    const totalLen = TRACK_LENGTH + 120;
+
+    // Piste principale
+    const trackGeo = new THREE.BoxGeometry(TRACK_WIDTH, 1.2, totalLen);
+    const trackMat = new THREE.MeshStandardMaterial({
+        map: createSlideTexture(),
+        roughness: 0.25,
+        metalness: 0.05
+    });
+    const trackMesh = new THREE.Mesh(trackGeo, trackMat);
+    trackMesh.position.set(0, -0.6, -totalLen / 2 + 20);
+    trackMesh.receiveShadow = true;
+    worldGroup.add(trackMesh);
+
+    // Rebords latéraux bas (on peut quand même sauter par-dessus et tomber dans le vide si on force trop sur les côtés !)
+    const railGeo = new THREE.BoxGeometry(0.65, 0.75, totalLen);
+    const railMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.3 });
+
+    const leftRail = new THREE.Mesh(railGeo, railMat);
+    leftRail.position.set(-TRACK_WIDTH / 2 - 0.2, 0.25, -totalLen / 2 + 20);
+    leftRail.receiveShadow = true;
+    worldGroup.add(leftRail);
+
+    const rightRail = new THREE.Mesh(railGeo, railMat);
+    rightRail.position.set(TRACK_WIDTH / 2 + 0.2, 0.25, -totalLen / 2 + 20);
+    rightRail.receiveShadow = true;
+    worldGroup.add(rightRail);
+
+    // Arches décoratives le long du toboggan
+    const archGeo = new THREE.TorusGeometry(TRACK_WIDTH * 0.62, 0.32, 10, 28, Math.PI);
+    const archColors = [0xfacc15, 0xf43f5e, 0xa855f7, 0x10b981];
+    for (let z = -120; z > -TRACK_LENGTH + 80; z -= 180) {
+        const archMat = new THREE.MeshStandardMaterial({
+            color: archColors[Math.abs(z / 180) % archColors.length],
+            roughness: 0.3
+        });
+        const arch = new THREE.Mesh(archGeo, archMat);
+        arch.position.set(0, 0, z);
+        worldGroup.add(arch);
+    }
+
+    // Ligne d'arrivée à damier
+    const finishFloorGeo = new THREE.PlaneGeometry(TRACK_WIDTH, 6);
+    const checkerTex = createCheckerTexture();
+    const finishFloorMat = new THREE.MeshBasicMaterial({ map: checkerTex });
+    const finishFloor = new THREE.Mesh(finishFloorGeo, finishFloorMat);
+    finishFloor.rotation.x = -Math.PI / 2;
+    finishFloor.position.set(0, 0.03, -TRACK_LENGTH);
+    worldGroup.add(finishFloor);
+
+    // Arche monumentale d'arrivée
+    const pillarGeo = new THREE.CylinderGeometry(0.5, 0.5, 9, 16);
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.3, roughness: 0.2 });
+    const pLeft = new THREE.Mesh(pillarGeo, pillarMat);
+    pLeft.position.set(-TRACK_WIDTH / 2, 4.5, -TRACK_LENGTH);
+    const pRight = new THREE.Mesh(pillarGeo, pillarMat);
+    pRight.position.set(TRACK_WIDTH / 2, 4.5, -TRACK_LENGTH);
+    worldGroup.add(pLeft, pRight);
+
+    const bannerGeo = new THREE.BoxGeometry(TRACK_WIDTH + 1.4, 2.2, 0.6);
+    const bannerMat = new THREE.MeshStandardMaterial({ map: checkerTex });
+    const banner = new THREE.Mesh(bannerGeo, bannerMat);
+    banner.position.set(0, 8.2, -TRACK_LENGTH);
+    worldGroup.add(banner);
+}
+
+// --- CONSTRUCTION DU HAMSTER DANS SA BOULE TRANSPARENTE ---
+function buildHamsterBall() {
+    ballGroup = new THREE.Group();
+    ballGroup.position.set(0, BALL_RADIUS, 0);
+    worldGroup.add(ballGroup);
+
+    // 1. Le Hamster (à l'intérieur)
+    hamsterGroup = new THREE.Group();
+    ballGroup.add(hamsterGroup);
+
+    const furMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.6 });
+    const bellyMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.7 });
+    const pinkMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.5 });
+    const blackMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+
+    // Corps potelé
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.44, 18, 18), furMat);
+    body.scale.set(1, 0.95, 1.15);
+    body.position.set(0, -0.08, 0.05);
+    hamsterGroup.add(body);
+
+    // Ventre crème
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 16), bellyMat);
+    belly.position.set(0, -0.14, -0.1);
+    hamsterGroup.add(belly);
+
+    // Tête
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 18, 18), furMat);
+    head.position.set(0, 0.22, -0.22);
+    hamsterGroup.add(head);
+
+    // Joues rebondies
+    const cheekGeo = new THREE.SphereGeometry(0.14, 12, 12);
+    const cheekL = new THREE.Mesh(cheekGeo, bellyMat);
+    cheekL.position.set(-0.22, 0.14, -0.34);
+    const cheekR = new THREE.Mesh(cheekGeo, bellyMat);
+    cheekR.position.set(0.22, 0.14, -0.34);
+    hamsterGroup.add(cheekL, cheekR);
+
+    // Oreilles rondes
+    const earGeo = new THREE.SphereGeometry(0.12, 12, 12);
+    const earL = new THREE.Mesh(earGeo, pinkMat);
+    earL.position.set(-0.24, 0.48, -0.16);
+    const earR = new THREE.Mesh(earGeo, pinkMat);
+    earR.position.set(0.24, 0.48, -0.16);
+    hamsterGroup.add(earL, earR);
+
+    // Yeux brillants
+    const eyeGeo = new THREE.SphereGeometry(0.055, 10, 10);
+    const eyeL = new THREE.Mesh(eyeGeo, blackMat);
+    eyeL.position.set(-0.14, 0.28, -0.52);
+    const eyeR = new THREE.Mesh(eyeGeo, blackMat);
+    eyeR.position.set(0.14, 0.28, -0.52);
+    hamsterGroup.add(eyeL, eyeR);
+
+    // Petit nez rose
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), pinkMat);
+    nose.position.set(0, 0.21, -0.57);
+    hamsterGroup.add(nose);
+
+    // Pattes arrière qui courent
+    const legGeo = new THREE.SphereGeometry(0.11, 10, 10);
+    leftLeg = new THREE.Mesh(legGeo, pinkMat);
+    leftLeg.position.set(-0.2, -0.42, 0.12);
+    rightLeg = new THREE.Mesh(legGeo, pinkMat);
+    rightLeg.position.set(0.2, -0.42, 0.12);
+    hamsterGroup.add(leftLeg, rightLeg);
+
+    // 2. La Boule transparente avec reflets et anneaux d'aération pour voir la rotation
+    const sphereGeo = new THREE.SphereGeometry(BALL_RADIUS, 28, 28);
+    const sphereMat = new THREE.MeshPhongMaterial({
+        color: 0xe0f2fe,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.12,
+        specular: 0xffffff,
+        shininess: 110,
+        transparent: true,
+        opacity: 0.36
+    });
+    outerBall = new THREE.Mesh(sphereGeo, sphereMat);
+    outerBall.castShadow = true;
+
+    // Anneaux équatoriaux subtils sur la boule pour bien percevoir le roulement
+    const ringGeo = new THREE.TorusGeometry(BALL_RADIUS * 1.005, 0.025, 8, 36);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 });
+    const ring1 = new THREE.Mesh(ringGeo, ringMat);
+    const ring2 = new THREE.Mesh(ringGeo, ringMat);
+    ring2.rotation.y = Math.PI / 2;
+    outerBall.add(ring1, ring2);
+
+    ballGroup.add(outerBall);
+}
+
+// --- GÉNÉRATION DES OBSTACLES, GRAINES ET TREMPLINS ---
+function clearEntities() {
+    trackEntities.forEach(ent => worldGroup.remove(ent.mesh));
+    trackEntities = [];
+    particles.forEach(p => worldGroup.remove(p.mesh));
+    particles = [];
+}
+
+function populateTrack() {
+    clearEntities();
+
+    // Géométries partagées
+    const seedGeo = new THREE.OctahedronGeometry(0.45, 0);
+    const seedMat = new THREE.MeshStandardMaterial({
+        color: 0xfacc15,
+        emissive: 0xd97706,
+        emissiveIntensity: 0.35,
+        roughness: 0.2,
+        metalness: 0.4
+    });
+
+    const coneGeo = new THREE.ConeGeometry(0.65, 1.5, 16);
+    const coneMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.4 });
+    const stripeGeo = new THREE.CylinderGeometry(0.32, 0.44, 0.35, 16);
+    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    const hurdleGeo = new THREE.BoxGeometry(3.4, 0.95, 0.55);
+    const hurdleMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35 });
+
+    const puddleGeo = new THREE.CylinderGeometry(1.55, 1.55, 0.08, 20);
+    const puddleMat = new THREE.MeshStandardMaterial({
+        color: 0xa855f7,
+        emissive: 0x6b21a8,
+        emissiveIntensity: 0.3,
+        roughness: 0.1
+    });
+
+    const movBlockGeo = new THREE.BoxGeometry(2.3, 1.6, 1.4);
+    const movBlockMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.3 });
+
+    const boostGeo = new THREE.PlaneGeometry(2.6, 4.2);
+    const boostMat = new THREE.MeshBasicMaterial({
+        color: 0x22c55e,
+        side: THREE.DoubleSide
+    });
+
+    // Parcourir le toboggan par tranches de z = -45 jusqu'à -TRACK_LENGTH + 45
+    for (let z = -45; z > -TRACK_LENGTH + 45; z -= 24) {
+        const progress = Math.abs(z) / TRACK_LENGTH; // 0 au début -> 1 à la fin
+        const rand = Math.random();
+
+        // 1. Alignement de graines de tournesol (fréquent et gratifiant)
+        if (rand < 0.42) {
+            const laneX = (Math.random() - 0.5) * (TRACK_WIDTH - 3.5);
+            const count = 3 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < count; i++) {
+                const seed = new THREE.Mesh(seedGeo, seedMat);
+                seed.scale.set(0.7, 1.2, 0.45);
+                seed.position.set(laneX, 0.85, z - i * 3.2);
+                worldGroup.add(seed);
+                trackEntities.push({
+                    type: 'SEED',
+                    mesh: seed,
+                    radius: 0.95,
+                    collected: false
+                });
+            }
+        }
+
+        // 2. Tremplin accélérateur (flèche verte lumineuse)
+        if (rand >= 0.42 && rand < 0.56) {
+            const boostX = (Math.random() - 0.5) * (TRACK_WIDTH - 4);
+            const padGroup = new THREE.Group();
+            const base = new THREE.Mesh(boostGeo, boostMat);
+            base.rotation.x = -Math.PI / 2;
+            padGroup.add(base);
+
+            // Chevrons lumineux
+            const chevGeo = new THREE.ConeGeometry(0.75, 1.1, 3);
+            const chevMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+            const c1 = new THREE.Mesh(chevGeo, chevMat);
+            c1.rotation.x = -Math.PI / 2;
+            c1.position.set(0, 0.08, -0.7);
+            const c2 = c1.clone();
+            c2.position.set(0, 0.08, 0.9);
+            padGroup.add(c1, c2);
+
+            padGroup.position.set(boostX, 0.05, z);
+            worldGroup.add(padGroup);
+            trackEntities.push({
+                type: 'BOOST',
+                mesh: padGroup,
+                halfW: 1.4,
+                halfD: 2.1
+            });
+            continue;
+        }
+
+        // 3. Obstacles variés (densité augmente progressivement)
+        const obstacleRoll = Math.random();
+        if (obstacleRoll < 0.30) {
+            // Plots (1 à 2 plots)
+            const numCones = progress > 0.45 && Math.random() > 0.4 ? 2 : 1;
+            for (let c = 0; c < numCones; c++) {
+                const coneGroup = new THREE.Group();
+                const cone = new THREE.Mesh(coneGeo, coneMat);
+                cone.position.y = 0.75;
+                cone.castShadow = true;
+                const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+                stripe.position.y = 0.85;
+                coneGroup.add(cone, stripe);
+
+                const cx = (Math.random() - 0.5) * (TRACK_WIDTH - 2.4);
+                coneGroup.position.set(cx, 0, z - c * 2);
+                worldGroup.add(coneGroup);
+                trackEntities.push({
+                    type: 'OBSTACLE',
+                    mesh: coneGroup,
+                    halfW: 0.65,
+                    height: 1.45,
+                    halfD: 0.65
+                });
+            }
+        } else if (obstacleRoll < 0.56) {
+            // Barrière basse (à contourner ou sauter par-dessus !)
+            const hx = (Math.random() - 0.5) * (TRACK_WIDTH - 4.2);
+            const hurdle = new THREE.Mesh(hurdleGeo, hurdleMat);
+            hurdle.position.set(hx, 0.48, z);
+            hurdle.castShadow = true;
+            worldGroup.add(hurdle);
+            trackEntities.push({
+                type: 'OBSTACLE',
+                mesh: hurdle,
+                halfW: 1.65,
+                height: 0.95,
+                halfD: 0.4
+            });
+        } else if (obstacleRoll < 0.78) {
+            // Flaque collante violette (ralentit si on roule dedans, sauter pour éviter)
+            const px = (Math.random() - 0.5) * (TRACK_WIDTH - 3.6);
+            const puddle = new THREE.Mesh(puddleGeo, puddleMat);
+            puddle.position.set(px, 0.04, z);
+            worldGroup.add(puddle);
+            trackEntities.push({
+                type: 'STICKY',
+                mesh: puddle,
+                radius: 1.55
+            });
+        } else {
+            // Bloc mobile qui glisse latéralement
+            const block = new THREE.Mesh(movBlockGeo, movBlockMat);
+            block.position.set(0, 0.8, z);
+            block.castShadow = true;
+            worldGroup.add(block);
+            trackEntities.push({
+                type: 'MOVING_OBSTACLE',
+                mesh: block,
+                halfW: 1.15,
+                height: 1.6,
+                halfD: 0.7,
+                phase: Math.random() * Math.PI * 2,
+                speed: 1.8 + progress * 1.6
+            });
+        }
+    }
+}
+
+// --- SYSTÈME DE PARTICULES ---
+function spawnParticles(x, y, z, colorHex, count = 14) {
+    const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+    const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+    for (let i = 0; i < count; i++) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, y, z);
+        worldGroup.add(mesh);
+        particles.push({
+            mesh,
+            vx: (Math.random() - 0.5) * 12,
+            vy: Math.random() * 10 + 3,
+            vz: (Math.random() - 0.5) * 12,
+            life: 0.55 + Math.random() * 0.3
+        });
+    }
+}
+
+function updateParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0) {
+            worldGroup.remove(p.mesh);
+            particles.splice(i, 1);
+            continue;
+        }
+        p.vy += GRAVITY * 0.6 * dt;
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+        p.mesh.rotation.x += 6 * dt;
+        p.mesh.rotation.y += 6 * dt;
+        p.mesh.scale.setScalar(Math.max(0.01, p.life * 1.4));
+    }
+}
+
+// --- GESTION DES ENTRÉES (CLAVIER, SOURIS, TACTILE) ---
+function setupInputs() {
+    window.addEventListener('keydown', (e) => {
+        if (['ArrowLeft', 'KeyA', 'KeyQ'].includes(e.code)) keys.left = true;
+        if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = true;
+        if (['Space', 'ArrowUp', 'KeyW', 'KeyZ'].includes(e.code)) {
+            if (gameState === 'PLAYING') triggerJump();
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (['ArrowLeft', 'KeyA', 'KeyQ'].includes(e.code)) keys.left = false;
+        if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = false;
+    });
+
+    // Contrôle souris / glissement tactile fluide sur le canvas
+    let pointerDown = false;
+    let startX = 0;
+    let startY = 0;
+    let moved = false;
+
+    const canvas = renderer.domElement;
+
+    canvas.addEventListener('pointerdown', (e) => {
+        if (gameState !== 'PLAYING') return;
+        pointerDown = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        moved = false;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+        if (!pointerDown || gameState !== 'PLAYING') return;
+        const dx = e.clientX - startX;
+        if (Math.abs(dx) > 6) {
+            moved = true;
+            // Déplacement latéral proportionnel au glissement
+            const sensitivity = (TRACK_WIDTH / window.innerWidth) * 1.65;
+            player.x += dx * sensitivity;
+            startX = e.clientX;
+        }
+    });
+
+    window.addEventListener('pointerup', () => {
+        if (pointerDown && !moved && gameState === 'PLAYING') {
+            // Un simple clic/tap fait sauter !
+            triggerJump();
+        }
+        pointerDown = false;
+    });
+
+    // Boutons tactiles dédiés sur mobile
+    const btnLeft = document.getElementById('touch-left');
+    const btnRight = document.getElementById('touch-right');
+    const btnJump = document.getElementById('touch-jump');
+
+    const bindHold = (el, keyName) => {
+        el.addEventListener('pointerdown', (e) => { e.stopPropagation(); keys[keyName] = true; });
+        el.addEventListener('pointerup', (e) => { e.stopPropagation(); keys[keyName] = false; });
+        el.addEventListener('pointerleave', () => { keys[keyName] = false; });
+    };
+    bindHold(btnLeft, 'left');
+    bindHold(btnRight, 'right');
+    btnJump.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        if (gameState === 'PLAYING') triggerJump();
+    });
+
+    // Boutons d'interface
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-retry-go').addEventListener('click', startGame);
+    document.getElementById('btn-retry-win').addEventListener('click', startGame);
+
+    document.getElementById('btn-mute').addEventListener('click', (e) => {
+        sound.init();
+        const isMuted = sound.toggleMute();
+        e.currentTarget.textContent = isMuted ? '🔇' : '🔊';
+    });
+}
+
+function triggerJump() {
+    if (player.isGrounded && !player.fallingOff) {
+        player.vy = JUMP_FORCE;
+        player.isGrounded = false;
+        sound.playJump();
+        spawnParticles(player.x, 0.2, player.z, 0xffffff, 8);
+    }
+}
+
+// --- DÉMARRAGE / RÉINITIALISATION DE PARTIE ---
+function startGame() {
+    sound.init();
+    populateTrack();
+
+    player.x = 0;
+    player.y = BALL_RADIUS;
+    player.z = 0;
+    player.vx = 0;
+    player.vy = 0;
+    player.speed = player.baseSpeed;
+    player.isGrounded = true;
+    player.fallingOff = false;
+    player.boostTimer = 0;
+    player.stickyTimer = 0;
+    player.seeds = 0;
+    player.elapsedTime = 0;
+
+    ballGroup.position.set(0, BALL_RADIUS, 0);
+    ballGroup.rotation.set(0, 0, 0);
+
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('screen-gameover').classList.add('hidden');
+    document.getElementById('screen-victory').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('mobile-controls').classList.remove('hidden');
+
+    gameState = 'PLAYING';
+    clock.getDelta();
+}
+
+function triggerGameOver(reasonText) {
+    if (gameState !== 'PLAYING') return;
+    gameState = 'GAMEOVER';
+    sound.playCrash();
+    spawnParticles(player.x, player.y, player.z, 0xf97316, 25);
+
+    const pct = Math.min(100, Math.floor((Math.abs(player.z) / TRACK_LENGTH) * 100));
+    document.getElementById('gameover-reason').textContent = reasonText;
+    document.getElementById('go-distance').textContent = `${pct}%`;
+    document.getElementById('go-seeds').textContent = `${player.seeds} 🌻`;
+
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('mobile-controls').classList.add('hidden');
+    document.getElementById('speed-vignette').style.opacity = '0';
+    document.getElementById('screen-gameover').classList.remove('hidden');
+}
+
+function triggerVictory() {
+    if (gameState !== 'PLAYING') return;
+    gameState = 'VICTORY';
+    sound.playWin();
+
+    // Pluie de confettis colorés
+    const confettiColors = [0xfacc15, 0xf43f5e, 0x38bdf8, 0x22c55e, 0xa855f7];
+    confettiColors.forEach(col => {
+        spawnParticles(player.x, player.y + 1.5, player.z - 2, col, 14);
+    });
+
+    const timeBonus = Math.max(0, Math.round((45 - player.elapsedTime) * 20));
+    const totalScore = player.seeds * 50 + timeBonus + 500;
+
+    document.getElementById('win-time').textContent = `${player.elapsedTime.toFixed(1)}s`;
+    document.getElementById('win-seeds').textContent = `${player.seeds} 🌻`;
+    document.getElementById('win-score').textContent = `${totalScore}`;
+
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('mobile-controls').classList.add('hidden');
+    document.getElementById('speed-vignette').style.opacity = '0';
+    document.getElementById('screen-victory').classList.remove('hidden');
+}
+
+// --- BOUCLE DE JEU PRINCIPALE ---
+function updateGame(dt) {
+    if (gameState !== 'PLAYING') {
+        // Animation douce sur l'écran titre
+        if (gameState === 'START') {
+            const t = performance.now() * 0.003;
+            outerBall.rotation.x -= 2.5 * dt;
+            hamsterGroup.position.y = Math.abs(Math.sin(t * 3)) * 0.08;
+            leftLeg.position.z = 0.12 + Math.sin(t * 8) * 0.12;
+            rightLeg.position.z = 0.12 - Math.sin(t * 8) * 0.12;
+        }
+        updateParticles(dt);
+        return;
+    }
+
+    player.elapsedTime += dt;
+
+    // 1. Gestion des modificateurs de vitesse (Turbo / Flaque collante)
+    let targetSpeed = player.baseSpeed + (Math.abs(player.z) / TRACK_LENGTH) * 14; // Accélération progressive naturelle
+    const statusBadge = document.getElementById('status-badge');
+    const vignette = document.getElementById('speed-vignette');
+
+    if (player.boostTimer > 0) {
+        player.boostTimer -= dt;
+        targetSpeed = player.maxSpeed;
+        statusBadge.textContent = '⚡ TURBO !';
+        statusBadge.className = 'px-4 py-1.5 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider shadow-lg bg-amber-400 text-slate-900 boost-active';
+        statusBadge.classList.remove('hidden');
+        vignette.style.opacity = '1';
+    } else if (player.stickyTimer > 0) {
+        player.stickyTimer -= dt;
+        targetSpeed = 23;
+        statusBadge.textContent = '🍯 RALENTI !';
+        statusBadge.className = 'px-4 py-1.5 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider shadow-lg bg-purple-600 text-white';
+        statusBadge.classList.remove('hidden');
+        vignette.style.opacity = '0';
+    } else {
+        statusBadge.classList.add('hidden');
+        vignette.style.opacity = '0';
+    }
+
+    player.speed += (targetSpeed - player.speed) * 6 * dt;
+
+    // 2. Déplacement latéral (clavier)
+    const lateralAccel = 62;
+    const lateralFriction = 10;
+    if (keys.left) player.vx -= lateralAccel * dt;
+    if (keys.right) player.vx += lateralAccel * dt;
+    player.vx -= player.vx * lateralFriction * dt;
+    player.x += player.vx * dt;
+
+    // 3. Rebord du toboggan & détection de sortie de piste
+    const maxSafeX = TRACK_WIDTH / 2;
+    if (!player.fallingOff) {
+        if (Math.abs(player.x) > maxSafeX + 0.35) {
+            // Le joueur est sorti du toboggan !
+            player.fallingOff = true;
+            player.isGrounded = false;
+        } else if (Math.abs(player.x) > maxSafeX - 0.35 && player.y <= BALL_RADIUS + 0.45) {
+            // Petit rebond souple contre le rebord orange si on reste sur la piste
+            player.x = Math.sign(player.x) * (maxSafeX - 0.35);
+            player.vx *= -0.35;
+        }
+    }
+
+    // 4. Physique verticale (Saut & Gravité)
+    if (!player.isGrounded || player.fallingOff) {
+        player.vy += GRAVITY * dt;
+        player.y += player.vy * dt;
+
+        if (!player.fallingOff && player.y <= BALL_RADIUS) {
+            player.y = BALL_RADIUS;
+            player.vy = 0;
+            player.isGrounded = true;
+        }
+
+        // Chute dans le vide sous le toboggan
+        if (player.y < -10) {
+            triggerGameOver('Tu es tombé dans les nuages hors du toboggan !');
+            return;
+        }
+    }
+
+    // 5. Avancée sur le toboggan
+    player.z -= player.speed * dt;
+    ballGroup.position.set(player.x, player.y, player.z);
+
+    // 6. Rotation réaliste de la boule et animation du hamster
+    outerBall.rotation.x -= (player.speed * dt) / BALL_RADIUS;
+    outerBall.rotation.z -= (player.vx * dt) / BALL_RADIUS;
+
+    // Le hamster garde l'équilibre à l'intérieur mais s'incline légèrement dans les virages
+    hamsterGroup.rotation.z = THREE.MathUtils.lerp(hamsterGroup.rotation.z, -player.vx * 0.025, 10 * dt);
+    hamsterGroup.rotation.x = THREE.MathUtils.lerp(hamsterGroup.rotation.x, -0.15, 8 * dt);
+    const runCycle = player.elapsedTime * (player.speed * 0.45);
+    leftLeg.position.z = 0.12 + Math.sin(runCycle) * 0.14;
+    rightLeg.position.z = 0.12 - Math.sin(runCycle) * 0.14;
+
+    // 7. Mise à jour des entités & collisions
+    const ballBottom = player.y - BALL_RADIUS;
+
+    for (let i = 0; i < trackEntities.length; i++) {
+        const ent = trackEntities[i];
+
+        // Animation des graines
+        if (ent.type === 'SEED' && !ent.collected) {
+            ent.mesh.rotation.y += 3.2 * dt;
+            ent.mesh.position.y = 0.85 + Math.sin(player.elapsedTime * 5 + i) * 0.15;
+
+            const dx = player.x - ent.mesh.position.x;
+            const dy = player.y - ent.mesh.position.y;
+            const dz = player.z - ent.mesh.position.z;
+            if (dx * dx + dy * dy + dz * dz < (BALL_RADIUS + ent.radius) ** 2) {
+                ent.collected = true;
+                ent.mesh.visible = false;
+                player.seeds++;
+                sound.playSeed();
+                spawnParticles(ent.mesh.position.x, ent.mesh.position.y, ent.mesh.position.z, 0xfacc15, 10);
+            }
+        }
+
+        // Blocs mobiles latéraux
+        if (ent.type === 'MOVING_OBSTACLE') {
+            ent.mesh.position.x = Math.sin(player.elapsedTime * ent.speed + ent.phase) * (TRACK_WIDTH / 2 - 1.5);
+        }
+
+        // Collisions proches en Z uniquement (optimisation)
+        const dz = Math.abs(player.z - ent.mesh.position.z);
+        if (dz > 3.5) continue;
+
+        if (ent.type === 'BOOST') {
+            const dx = Math.abs(player.x - ent.mesh.position.x);
+            if (dx < ent.halfW + 0.5 && dz < ent.halfD && ballBottom < 0.4) {
+                if (player.boostTimer <= 0.2) {
+                    sound.playBoost();
+                    spawnParticles(player.x, 0.3, player.z, 0x22c55e, 12);
+                }
+                player.boostTimer = 1.6;
+                player.stickyTimer = 0;
+            }
+        } else if (ent.type === 'STICKY') {
+            const dx = player.x - ent.mesh.position.x;
+            if (dx * dx + dz * dz < (ent.radius + 0.4) ** 2 && ballBottom < 0.25) {
+                if (player.stickyTimer <= 0.1) {
+                    sound.playSticky();
+                    spawnParticles(player.x, 0.2, player.z, 0xa855f7, 8);
+                }
+                player.stickyTimer = 1.3;
+                player.boostTimer = 0;
+            }
+        } else if (ent.type === 'OBSTACLE' || ent.type === 'MOVING_OBSTACLE') {
+            const dx = Math.abs(player.x - ent.mesh.position.x);
+            // Vérifie si le joueur n'a pas sauté assez haut par-dessus l'obstacle
+            if (dx < ent.halfW + BALL_RADIUS * 0.65 &&
+                dz < ent.halfD + BALL_RADIUS * 0.65 &&
+                ballBottom < ent.height - 0.15) {
+                triggerGameOver('Boum ! Tu as heurté un obstacle sur le toboggan.');
+                return;
+            }
+        }
+    }
+
+    // 8. Vérification de la ligne d'arrivée
+    if (player.z <= -TRACK_LENGTH) {
+        triggerVictory();
+        return;
+    }
+
+    // 9. Mise à jour du HUD
+    const pct = Math.min(100, Math.max(0, (Math.abs(player.z) / TRACK_LENGTH) * 100));
+    document.getElementById('progress-fill').style.width = `${pct}%`;
+    document.getElementById('progress-hamster').style.left = `${pct}%`;
+    document.getElementById('hud-seeds').textContent = player.seeds;
+    document.getElementById('hud-time').textContent = `${player.elapsedTime.toFixed(1)}s`;
+
+    updateParticles(dt);
+}
+
+// --- POSITIONNEMENT DYNAMIQUE DE LA CAMÉRA ---
+function updateCamera(dt) {
+    // Calculer la position mondiale de la boule (qui est dans worldGroup incliné)
+    const ballWorldPos = new THREE.Vector3();
+    ballGroup.getWorldPosition(ballWorldPos);
+
+    // Effet de FOV dynamique lors du turbo
+    const targetFov = player.boostTimer > 0 ? 74 : 62;
+    camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 6 * dt);
+    camera.updateProjectionMatrix();
+
+    // La caméra suit légèrement derrière et au-dessus avec un amorti fluide
+    const desiredX = ballWorldPos.x * 0.65;
+    const desiredY = ballWorldPos.y + 4.4;
+    const desiredZ = ballWorldPos.z + 9.2;
+
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, desiredX, 8 * dt);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, desiredY, 10 * dt);
+    camera.position.z = desiredZ;
+
+    camera.lookAt(ballWorldPos.x * 0.4, ballWorldPos.y + 0.6, ballWorldPos.z - 14);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// --- BOUCLE D'ANIMATION ---
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05); // Cap delta-time pour la stabilité physique
+
+    updateGame(dt);
+    updateCamera(dt);
+    renderer.render(scene, camera);
+}
+
+// Lancement après chargement complet de la page
+window.onload = function () {
+    initScene();
+    animate();
+};
+</script>
+</body>
+</html>

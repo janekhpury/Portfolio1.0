@@ -1,0 +1,538 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Games - Jane Khoury</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      color: #ffffff;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+        radial-gradient(circle at 50% 15%, #0b2948 0%, #030914 75%);
+      background-size: 42px 42px, 42px 42px, 100% 100%;
+      background-attachment: fixed;
+    }
+
+    /* --- TOP BAR --- */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(3, 10, 24, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #e0f2fe;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-4px);
+      background: rgba(56, 189, 248, 0.25);
+    }
+
+    .top-badge {
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #7dd3fc;
+    }
+
+    /* --- MAIN CONTAINER --- */
+    .container {
+      width: min(960px, 92vw);
+      margin: 0 auto;
+      padding: 40px 0 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 54px;
+    }
+
+    /* --- INTRO / CV SECTION --- */
+    .intro-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .intro-header h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      font-weight: 900;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #ffffff, #7dd3fc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .intro-header p {
+      margin: 0;
+      color: #bae6fd;
+      font-size: 1.05rem;
+    }
+
+    .cv-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .cv-card {
+      background: rgba(8, 24, 48, 0.82);
+      border: 1px solid rgba(56, 189, 248, 0.32);
+      border-radius: 22px;
+      padding: 26px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .cv-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+      color: #7dd3fc;
+      letter-spacing: 0.5px;
+    }
+
+    .cv-card p {
+      margin: 0;
+      font-size: 0.96rem;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+
+    .software-logos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(56, 189, 248, 0.18);
+    }
+
+    .soft-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(14, 165, 233, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #f0f9ff;
+    }
+
+    .soft-pill svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .scroll-hint {
+      text-align: center;
+      color: #7dd3fc;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      animation: bounce-down 2s infinite;
+    }
+
+    @keyframes bounce-down {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+
+    /* --- GAME SHOWCASE CARDS --- */
+    .game-section {
+      background: rgba(7, 20, 40, 0.88);
+      border: 2px solid rgba(56, 189, 248, 0.35);
+      border-radius: 26px;
+      padding: 28px;
+      box-shadow:
+        0 24px 50px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(56, 189, 248, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .game-number {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #7dd3fc;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .game-header h3 {
+      margin: 0 0 8px;
+      font-size: 1.65rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .game-header p {
+      margin: 0;
+      font-size: 0.96rem;
+      line-height: 1.55;
+      color: #cbd5e1;
+      max-width: 680px;
+    }
+
+    .fullscreen-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 15px;
+      border-radius: 12px;
+      background: rgba(14, 165, 233, 0.16);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #e0f2fe;
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 700;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .fullscreen-link:hover {
+      background: rgba(14, 165, 233, 0.32);
+      transform: translateY(-2px);
+    }
+
+    /* --- IFRAME PREVIEW CONTAINER --- */
+    .preview-frame-box {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 3px solid #1e3a5f;
+      background: #020617;
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Cadre vertical adapté pour Arigato (jeu mobile portrait) */
+    .preview-frame-box.portrait-mode {
+      height: 620px;
+      background: radial-gradient(circle at center, #1e293b 0%, #020617 85%);
+    }
+
+    .preview-frame-box.portrait-mode iframe {
+      width: min(390px, 100%);
+      height: 100%;
+      border-left: 3px solid #fde047;
+      border-right: 3px solid #fde047;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Overlay d'activation pour éviter que les 4 jeux tournent simultanément */
+    .launch-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.82), rgba(2, 6, 23, 0.94));
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+      padding: 20px;
+      z-index: 10;
+    }
+
+    .launch-overlay.hidden {
+      display: none;
+    }
+
+    .launch-overlay h4 {
+      margin: 0;
+      font-size: 1.45rem;
+      color: #ffffff;
+    }
+
+    .launch-overlay p {
+      margin: 0;
+      font-size: 0.94rem;
+      color: #bae6fd;
+      max-width: 420px;
+    }
+
+    .btn-launch {
+      padding: 13px 28px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.98rem;
+      letter-spacing: 0.6px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(14, 165, 233, 0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-launch:hover {
+      transform: scale(1.06);
+      box-shadow: 0 12px 28px rgba(14, 165, 233, 0.65);
+    }
+
+    @media (max-width: 760px) {
+      .cv-grid {
+        grid-template-columns: 1fr;
+      }
+      .preview-frame-box {
+        height: 400px;
+      }
+      .preview-frame-box.portrait-mode {
+        height: 540px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a class="back-btn" href="programming.html">← Back to Programming</a>
+    <span class="top-badge">🎮 Video Games • Jane Khoury</span>
+  </div>
+
+  <main class="container">
+
+    <!-- SECTION 1 : CV & SOFTWARE EXPERIENCE -->
+    <section>
+      <div class="intro-header">
+        <h1>Game Development & Interactive Prototypes</h1>
+        <p>8 years of programming passion — from Android releases to playable web reconstructions</p>
+      </div>
+
+      <div class="cv-grid">
+        <!-- CARD 1 : UNITY & HTML -->
+        <div class="cv-card">
+          <div>
+            <h2>Game Development & Web Programming</h2>
+            <p>
+              With 8 years of self-taught programming experience driven by a passion for interactive design, I began my journey developing 2D and 3D games in <strong>Unity</strong>. I later expanded into <strong>HTML, CSS, and JavaScript</strong>, leveraging web technologies as an agile and accessible framework to build and deploy interactive experiences.
+            </p>
+          </div>
+
+          <div class="software-logos">
+            <!-- Unity Logo -->
+            <div class="soft-pill">
+              <svg viewBox="0 0 64 64" fill="none">
+                <path d="M49.6 15.2L32 5L14.4 15.2L18.2 21.8L28 16.1V27.5L18.1 33.2L22 39.8L32 34L42 39.8L45.9 33.2L36 27.5V16.1L45.8 21.8L49.6 15.2Z" fill="#FFFFFF"/>
+                <path d="M12.2 19.1L5 31.6L12.2 44.1L19.8 44.1L14.1 34.3L24 28.6L24 17.2L16.3 17.2L22 27L12.2 32.7L12.2 19.1Z" fill="#CBD5E1"/>
+                <path d="M51.8 19.1L51.8 32.7L42 27L47.7 17.2L40 17.2L40 28.6L49.9 34.3L44.2 44.1L51.8 44.1L59 31.6L51.8 19.1Z" fill="#94A3B8"/>
+                <path d="M15.8 47.8L32 57.2L48.2 47.8L44.4 41.2L32 48.4L19.6 41.2L15.8 47.8Z" fill="#E2E8F0"/>
+              </svg>
+              <span>Unity</span>
+            </div>
+
+            <!-- HTML5 / CSS3 / JS Logo -->
+            <div class="soft-pill">
+              <svg viewBox="0 0 64 64" fill="none">
+                <path d="M10 6H54L50 51L32 57L14 51L10 6Z" fill="#E34F26"/>
+                <path d="M32 10V52.8L46.5 48L49.8 10H32Z" fill="#EF652A"/>
+                <path d="M20 20H44L43.2 28H26.5L27.1 34H42.6L41.4 46L32 49L22.6 46L22 39H28L28.3 42.2L32 43.3L35.7 42.2L36.2 38H21.5L20 20Z" fill="#FFFFFF"/>
+              </svg>
+              <span>HTML5 / CSS3 / JS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2 : GOOGLE PLAY CONSOLE -->
+        <div class="cv-card">
+          <div>
+            <h2>Mobile Deployment & Publishing</h2>
+            <p>
+              I successfully packaged, tested, and published multiple original Android game titles through the <strong>Google Play Console</strong>, managing the full development lifecycle from initial concept and gameplay mechanics to store deployment. Below are interactive playable previews of my games.
+            </p>
+          </div>
+
+          <div class="software-logos">
+            <!-- Google Play Console Logo -->
+            <div class="soft-pill">
+              <svg viewBox="0 0 64 64" fill="none">
+                <path d="M12 9.5C11.4 10.2 11 11.2 11 12.6V51.4C11 52.8 11.4 53.8 12 54.5L12.3 54.7L34.1 32.9V32.4V31.9L12.3 10.1L12 9.5Z" fill="#38BDF8"/>
+                <path d="M41.3 40.2L34.1 32.9V32.4V31.9L41.3 24.6L41.6 24.8L50.2 29.7C52.6 31.1 52.6 33.3 50.2 34.7L41.6 39.6L41.3 40.2Z" fill="#FACC15"/>
+                <path d="M41.6 39.6L34.1 32.1L12 54.2C12.8 55.1 14.2 55.2 15.8 54.3L41.6 39.6Z" fill="#F43F5E"/>
+                <path d="M41.6 24.8L15.8 10.1C14.2 9.2 12.8 9.3 12 10.2L34.1 32.3L41.6 24.8Z" fill="#4ADE80"/>
+              </svg>
+              <span>Google Play Console (Android)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="scroll-hint">↓ Scroll down to play the interactive game previews ↓</div>
+
+    <!-- ===================================================================
+         GAME 01 : HAMSTER SLIDE
+         =================================================================== -->
+    <section class="game-section">
+      <div class="game-header">
+        <div>
+          <span class="game-number">Game 01 • 3D Arcade Slide</span>
+          <h3>Hamster Slide</h3>
+          <p>
+            A 3D arcade downhill runner built with Three.js. Steer your hamster ball down a giant sky slide, collect sunflower seeds, hit turbo boost pads, and jump over obstacles to cross the finish line.
+          </p>
+        </div>
+        <a class="fullscreen-link" href="hamster-slide.html" target="_blank" rel="noopener">⛶ Fullscreen</a>
+      </div>
+
+      <div class="preview-frame-box">
+        <iframe id="frame-hamster" title="Hamster Slide Preview"></iframe>
+        <div class="launch-overlay" id="overlay-hamster">
+          <h4>🐹 Hamster Slide (3D)</h4>
+          <p>Use Left/Right arrows or drag to steer, and Spacebar or tap to jump.</p>
+          <button class="btn-launch" onclick="loadGame('frame-hamster', 'overlay-hamster', 'hamster-slide.html')">▶ Play Preview</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         GAME 02 : PAPERBALL
+         =================================================================== -->
+    <section class="game-section">
+      <div class="game-header">
+        <div>
+          <span class="game-number">Game 02 • 2D Classroom Slingshot</span>
+          <h3>Paperball</h3>
+          <p>
+            Set inside a 2D classroom, targets descend from the top of the screen while you pull and release crumpled paper balls like a slingshot. You have <strong>3 hearts</strong> in the top-left corner—missing a target costs 1 heart.
+          </p>
+        </div>
+        <a class="fullscreen-link" href="paperball.html" target="_blank" rel="noopener">⛶ Fullscreen</a>
+      </div>
+
+      <div class="preview-frame-box">
+        <iframe id="frame-paperball" title="Paperball Preview"></iframe>
+        <div class="launch-overlay" id="overlay-paperball">
+          <h4>📄 Paperball (2D)</h4>
+          <p>Pull back the paper ball with your mouse or finger and release to hit the falling targets!</p>
+          <button class="btn-launch" onclick="loadGame('frame-paperball', 'overlay-paperball', 'paperball.html')">▶ Play Preview</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         GAME 03 : BONGO
+         =================================================================== -->
+    <section class="game-section">
+      <div class="game-header">
+        <div>
+          <span class="game-number">Game 03 • 3D Top-View Balance</span>
+          <h3>Bongo</h3>
+          <p>
+            A top-view 3D survival game on a rotating platform. Keep your sphere balanced using the on-screen joystick while colored balls roll across the platform and try to knock you off the edge against the timer.
+          </p>
+        </div>
+        <a class="fullscreen-link" href="bongo.html" target="_blank" rel="noopener">⛶ Fullscreen</a>
+      </div>
+
+      <div class="preview-frame-box">
+        <iframe id="frame-bongo" title="Bongo Preview"></iframe>
+        <div class="launch-overlay" id="overlay-bongo">
+          <h4>🔵 Bongo (3D)</h4>
+          <p>Use the bottom-left virtual joystick (or arrow keys) to stay on the spinning platform!</p>
+          <button class="btn-launch" onclick="loadGame('frame-bongo', 'overlay-bongo', 'bongo.html')">▶ Play Preview</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         GAME 04 : ARIGATO
+         =================================================================== -->
+    <section class="game-section">
+      <div class="game-header">
+        <div>
+          <span class="game-number">Game 04 • 2D Mobile Catcher</span>
+          <h3>Arigato</h3>
+          <p>
+            A vertical mobile 2D arcade game set against a bright light-yellow sky. Move the giraffe left and right to catch and eat falling green leaves—missing 3 leaves triggers a Game Over.
+          </p>
+        </div>
+        <a class="fullscreen-link" href="arigato.html" target="_blank" rel="noopener">⛶ Fullscreen</a>
+      </div>
+
+      <div class="preview-frame-box portrait-mode">
+        <iframe id="frame-arigato" title="Arigato Preview"></iframe>
+        <div class="launch-overlay" id="overlay-arigato">
+          <h4>🦒 Arigato (2D Mobile)</h4>
+          <p>Slide left and right to catch every falling green leaf before you lose all 3 lives!</p>
+          <button class="btn-launch" onclick="loadGame('frame-arigato', 'overlay-arigato', 'arigato.html')">▶ Play Preview</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function loadGame(frameId, overlayId, fileUrl) {
+      const iframe = document.getElementById(frameId);
+      const overlay = document.getElementById(overlayId);
+      iframe.src = fileUrl;
+      overlay.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

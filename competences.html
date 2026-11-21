@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compétences - Jane Khoury</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --max: 960px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* --- ARRIÈRE-PLAN ENGRENAGES & CIRCUITS --- */
+    .tech-background {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0.35;
+    }
+
+    .tech-background svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .gear-cw {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: spin-cw 38s linear infinite;
+    }
+
+    .gear-ccw {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: spin-ccw 28s linear infinite;
+    }
+
+    .gear-slow {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: spin-cw 55s linear infinite;
+    }
+
+    .pcb-pulse {
+      stroke-dasharray: 12 180;
+      animation: pulse-flow 6s linear infinite;
+    }
+
+    .pcb-pulse-delay {
+      stroke-dasharray: 10 220;
+      animation: pulse-flow 8s linear infinite 2.5s;
+    }
+
+    @keyframes spin-cw {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes spin-ccw {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    @keyframes pulse-flow {
+      from { stroke-dashoffset: 240; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* --- CONTENEUR & CARTE PRINCIPALE --- */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(92%, var(--max));
+      margin: 60px auto;
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2.2rem;
+    }
+
+    .skills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      list-style: none;
+      padding: 0;
+      margin: 18px 0 36px;
+    }
+
+    .skills-list li {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #dbeafe;
+      font-size: 0.95rem;
+    }
+
+    .section-label {
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 1.05rem;
+    }
+
+    /* --- GRILLE DES 3 BOUTONS VENOM SYMBIOTE --- */
+    .symbiote-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin: 24px 0 36px;
+    }
+
+    .symbiote-wrapper {
+      position: relative;
+      height: 190px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .symbiote-goo-layer {
+      position: absolute;
+      inset: -32px;
+      filter: url(#symbiote-goo);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .symbiote-core {
+      position: absolute;
+      inset: 32px;
+      background: #03030b;
+      border-radius: 24px;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.4s ease;
+    }
+
+    .symbiote-wrapper:hover .symbiote-core {
+      transform: scale(1.06);
+      border-radius: 32px 18px 28px 20px;
+    }
+
+    .tendril {
+      position: absolute;
+      background: #010309;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.2);
+      opacity: 0;
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+    }
+
+    .symbiote-wrapper:hover .tendril {
+      opacity: 1;
+    }
+
+    .symbiote-btn {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      text-decoration: none;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.12), transparent 60%);
+      box-shadow:
+        inset 0 2px 10px rgba(255, 255, 255, 0.16),
+        0 16px 32px rgba(0, 0, 0, 0.65);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+    }
+
+    .symbiote-wrapper:hover .symbiote-btn {
+      transform: scale(1.04);
+      border-color: rgba(255, 255, 255, 0.45);
+      box-shadow:
+        inset 0 2px 14px rgba(255, 255, 255, 0.28),
+        0 22px 42px rgba(0, 0, 0, 0.85),
+        0 0 22px rgba(56, 189, 248, 0.25);
+    }
+
+    .symbiote-btn::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 45%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      transform: rotate(25deg);
+      transition: left 0.6s ease;
+      pointer-events: none;
+    }
+
+    .symbiote-wrapper:hover .symbiote-btn::after {
+      left: 130%;
+    }
+
+    .symbiote-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.35));
+      transition: transform 0.3s ease;
+    }
+
+    .symbiote-wrapper:hover .symbiote-icon {
+      transform: scale(1.15) rotate(-4deg);
+    }
+
+    .symbiote-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .symbiote-desc {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 6px;
+      transition: color 0.3s ease;
+    }
+
+    .symbiote-wrapper:hover .symbiote-desc {
+      color: #e2e8f0;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 820px) {
+      .symbiote-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FILTRE SVG GOOEY POUR L'EFFET VENOM SYMBIOTE -->
+  <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+    <defs>
+      <filter id="symbiote-goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur" />
+        <feColorMatrix in="blur" mode="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 24 -9" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- FOND ANIMÉ : ROUES DENTÉES & PUCES ÉLECTRONIQUES -->
+  <div class="tech-background" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <g id="gear-shape">
+          <circle cx="0" cy="0" r="68" fill="none" stroke="#38bdf8" stroke-width="6" />
+          <circle cx="0" cy="0" r="46" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="10 6" />
+          <circle cx="0" cy="0" r="18" fill="none" stroke="#38bdf8" stroke-width="4" />
+          <line x1="-46" y1="0" x2="-18" y2="0" stroke="#38bdf8" stroke-width="4" />
+          <line x1="18" y1="0" x2="46" y2="0" stroke="#38bdf8" stroke-width="4" />
+          <line x1="0" y1="-46" x2="0" y2="-18" stroke="#38bdf8" stroke-width="4" />
+          <line x1="0" y1="18" x2="0" y2="46" stroke="#38bdf8" stroke-width="4" />
+          <g fill="#38bdf8">
+            <rect x="-7" y="-82" width="14" height="16" rx="2" />
+            <rect x="-7" y="66" width="14" height="16" rx="2" />
+            <rect x="-82" y="-7" width="16" height="14" rx="2" />
+            <rect x="66" y="-7" width="16" height="14" rx="2" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(30)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(60)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(120)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(150)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(210)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(240)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(300)" />
+            <rect x="-7" y="-82" width="14" height="16" rx="2" transform="rotate(330)" />
+          </g>
+        </g>
+
+        <g id="microchip">
+          <rect x="-45" y="-45" width="90" height="90" rx="10" fill="rgba(15, 23, 42, 0.7)" stroke="#22c55e" stroke-width="3" />
+          <rect x="-28" y="-28" width="56" height="56" rx="4" fill="none" stroke="#38bdf8" stroke-width="1.8" />
+          <circle cx="-16" cy="-16" r="3" fill="#22c55e" />
+          <g stroke="#22c55e" stroke-width="3" stroke-linecap="round">
+            <line x1="-25" y1="-45" x2="-25" y2="-62" />
+            <line x1="-8" y1="-45" x2="-8" y2="-62" />
+            <line x1="8" y1="-45" x2="8" y2="-62" />
+            <line x1="25" y1="-45" x2="25" y2="-62" />
+            <line x1="-25" y1="45" x2="-25" y2="62" />
+            <line x1="-8" y1="45" x2="-8" y2="62" />
+            <line x1="8" y1="45" x2="8" y2="62" />
+            <line x1="25" y1="45" x2="25" y2="62" />
+            <line x1="-45" y1="-25" x2="-62" y2="-25" />
+            <line x1="-45" y1="-8" x2="-62" y2="-8" />
+            <line x1="-45" y1="8" x2="-62" y2="8" />
+            <line x1="-45" y1="25" x2="-62" y2="25" />
+            <line x1="45" y1="-25" x2="62" y2="-25" />
+            <line x1="45" y1="-8" x2="62" y2="-8" />
+            <line x1="45" y1="8" x2="62" y2="8" />
+            <line x1="45" y1="25" x2="62" y2="25" />
+          </g>
+        </g>
+      </defs>
+
+      <g fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.45">
+        <path d="M 0 180 L 160 180 L 210 230 L 390 230" />
+        <path d="M 510 245 L 720 245 L 780 185 L 1050 185" />
+        <path d="M 1440 620 L 1220 620 L 1160 560 L 960 560" />
+        <path d="M 840 575 L 620 575 L 550 645 L 280 645 L 220 705 L 0 705" />
+      </g>
+
+      <g fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round">
+        <path class="pcb-pulse" d="M 0 180 L 160 180 L 210 230 L 390 230" />
+        <path class="pcb-pulse-delay" d="M 1440 620 L 1220 620 L 1160 560 L 960 560" />
+      </g>
+
+      <use href="#microchip" x="450" y="245" />
+      <use href="#microchip" x="900" y="575" transform="scale(1.15)" />
+
+      <g transform="translate(1240, 140)">
+        <g class="gear-cw"><use href="#gear-shape" transform="scale(1.35)" /></g>
+      </g>
+      <g transform="translate(1105, 255)">
+        <g class="gear-ccw"><use href="#gear-shape" transform="scale(0.85)" /></g>
+      </g>
+      <g transform="translate(150, 790)">
+        <g class="gear-slow"><use href="#gear-shape" transform="scale(1.6)" /></g>
+      </g>
+      <g transform="translate(315, 725)">
+        <g class="gear-ccw"><use href="#gear-shape" transform="scale(0.9)" /></g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h1>Compétences</h1>
+
+      <!-- TES COMPÉTENCES GÉNÉRALES -->
+      <ul class="skills-list">
+        <li>HTML / CSS</li>
+        <li>JavaScript</li>
+        <li>Responsive Design</li>
+        <li>Travail en équipe</li>
+      </ul>
+
+      <p class="section-label">Explore mes domaines de spécialisation :</p>
+
+      <!-- LES 3 BOUTONS VENOM SYMBIOTE -->
+      <div class="symbiote-grid">
+        <!-- Page 1 : Programming -->
+        <div class="symbiote-wrapper" data-symbiote>
+          <div class="symbiote-goo-layer">
+            <div class="symbiote-core"></div>
+          </div>
+          <a class="symbiote-btn" href="programming.html">
+            <div class="symbiote-icon"></></div>
+            <div class="symbiote-title">Programming</div>
+            <div class="symbiote-desc">C++, Web, MATLAB</div>
+          </a>
+        </div>
+
+        <!-- Page 2 : Digital Media -->
+        <div class="symbiote-wrapper" data-symbiote>
+          <div class="symbiote-goo-layer">
+            <div class="symbiote-core"></div>
+          </div>
+          <a class="symbiote-btn" href="digital-media.html">
+            <div class="symbiote-icon">🎬</div>
+            <div class="symbiote-title">Digital Media</div>
+            <div class="symbiote-desc">Montage & Graphisme</div>
+          </a>
+        </div>
+
+        <!-- Page 3 : Engineering -->
+        <div class="symbiote-wrapper" data-symbiote>
+          <div class="symbiote-goo-layer">
+            <div class="symbiote-core"></div>
+          </div>
+          <a class="symbiote-btn" href="engineering.html">
+            <div class="symbiote-icon">⚙️</div>
+            <div class="symbiote-title">Engineering</div>
+            <div class="symbiote-desc">CAD 2D/3D & FEA</div>
+          </a>
+        </div>
+      </div>
+
+      <p><a class="back-link" href="index.html">← Retour à l’accueil</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll("[data-symbiote]").forEach((wrapper) => {
+      const gooLayer = wrapper.querySelector(".symbiote-goo-layer");
+      const tendrils = [];
+      const count = 14;
+
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement("span");
+        dot.className = "tendril";
+        const size = 22 + Math.random() * 24;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        gooLayer.appendChild(dot);
+
+        const angle = (i / count) * Math.PI * 2;
+        tendrils.push({
+          el: dot,
+          baseAngle: angle,
+          distX: 100 + Math.random() * 38,
+          distY: 68 + Math.random() * 30,
+          speed: 0.002 + Math.random() * 0.002,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      let hovered = false;
+      let mouseX = 0;
+      let mouseY = 0;
+
+      wrapper.addEventListener("mouseenter", () => {
+        hovered = true;
+      });
+
+      wrapper.addEventListener("mouseleave", () => {
+        hovered = false;
+        tendrils.forEach((t) => {
+          t.el.style.transform = "translate(-50%, -50%) scale(0.2)";
+        });
+      });
+
+      wrapper.addEventListener("mousemove", (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        mouseX = (e.clientX - (rect.left + rect.width / 2)) * 0.25;
+        mouseY = (e.clientY - (rect.top + rect.height / 2)) * 0.25;
+      });
+
+      function animateSymbiote(time) {
+        if (hovered) {
+          tendrils.forEach((t) => {
+            const wobble = Math.sin(time * t.speed + t.phase) * 12;
+            const tx = Math.cos(t.baseAngle) * (t.distX + wobble) + mouseX;
+            const ty = Math.sin(t.baseAngle) * (t.distY + wobble) + mouseY;
+            const scale = 0.85 + Math.sin(time * t.speed * 1.5 + t.phase) * 0.25;
+            t.el.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scale})`;
+          });
+        }
+        requestAnimationFrame(animateSymbiote);
+      }
+
+      requestAnimationFrame(animateSymbiote);
+    });
+  </script>
+</body>
+</html>

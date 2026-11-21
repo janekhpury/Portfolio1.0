@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Media - Jane Khoury</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Arial Black', 'Segoe UI', Impact, sans-serif;
+      background: #2a2b31;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+      user-select: none;
+    }
+
+    /* Halo lumineux dynamique en arrière-plan */
+    .ambient-glow {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 780px;
+      height: 460px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      filter: blur(135px);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.65s ease;
+    }
+
+    body.page-0 .ambient-glow { background: #f97316; } /* Orange */
+    body.page-1 .ambient-glow { background: #ec4899; } /* Rose */
+    body.page-2 .ambient-glow { background: #38bdf8; } /* Bleu clair */
+
+    header, main, footer {
+      position: relative;
+      z-index: 2;
+    }
+
+    header {
+      padding: 22px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-4px);
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .top-title {
+      font-size: 0.95rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.75);
+      font-weight: 700;
+    }
+
+    /* --- SCÈNE CENTRALE DU SLIDESHOW --- */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+    }
+
+    .cards-deck {
+      position: relative;
+      width: min(880px, 92vw);
+      height: min(500px, 62vh);
+    }
+
+    .media-page {
+      position: absolute;
+      inset: 0;
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 56px;
+      text-align: center;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 28px 65px rgba(0, 0, 0, 0.75);
+      cursor: pointer;
+
+      /* État en attente à droite (prêt à glisser devant) */
+      opacity: 0;
+      z-index: 1;
+      pointer-events: none;
+      transform: translateX(115%) scale(1);
+      transition:
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.5s ease;
+    }
+
+    /* Page précédente qui recule légèrement en arrière-plan */
+    .media-page.is-prev {
+      opacity: 0.4;
+      z-index: 2;
+      pointer-events: none;
+      transform: translateX(-40px) scale(0.92);
+    }
+
+    /* Page active au premier plan */
+    .media-page.is-active {
+      opacity: 1;
+      z-index: 10;
+      pointer-events: auto;
+      transform: translateX(0%) scale(1);
+    }
+
+    /* --- THÈMES COULEURS --- */
+    .theme-orange {
+      background: radial-gradient(circle at 50% 45%, #fb923c 0%, #ea580c 60%, #c2410c 100%);
+    }
+
+    .theme-pink {
+      background: radial-gradient(circle at 50% 45%, #f472b6 0%, #db2777 60%, #9d174d 100%);
+    }
+
+    .theme-blue {
+      background: radial-gradient(circle at 50% 45%, #7dd3fc 0%, #0ea5e9 60%, #0284c7 100%);
+    }
+
+    /* --- CALQUE DE DESSINS & ANIMATIONS TRANSPARENTES --- */
+    .doodle-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .doodle-float {
+      animation: doodle-bob 4.5s ease-in-out infinite;
+    }
+
+    .doodle-float-slow {
+      animation: doodle-bob 6s ease-in-out infinite reverse;
+    }
+
+    .strass-twinkle {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: twinkle-star 2.4s ease-in-out infinite;
+    }
+
+    .strass-twinkle-delay {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: twinkle-star 3s ease-in-out infinite 1.1s;
+    }
+
+    @keyframes doodle-bob {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-9px) rotate(3deg); }
+    }
+
+    @keyframes twinkle-star {
+      0%, 100% { transform: scale(0.85) rotate(0deg); opacity: 0.35; }
+      50% { transform: scale(1.25) rotate(18deg); opacity: 0.9; }
+    }
+
+    /* --- ANIMATION POURSUITE + NUAGES (PAGE 2 ROSE) --- */
+    .cloud-drift-1 {
+      animation: drift-cloud 16s linear infinite;
+    }
+
+    .cloud-drift-2 {
+      animation: drift-cloud 22s linear infinite -7s;
+    }
+
+    @keyframes drift-cloud {
+      from { transform: translateX(920px); }
+      to { transform: translateX(-220px); }
+    }
+
+    .chase-track {
+      animation: chase-across 7.5s linear infinite;
+    }
+
+    @keyframes chase-across {
+      0% { transform: translateX(-240px); }
+      100% { transform: translateX(960px); }
+    }
+
+    .runner-bounce {
+      animation: run-hop 0.36s ease-in-out infinite alternate;
+    }
+
+    .chaser-bounce {
+      animation: run-hop 0.32s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes run-hop {
+      from { transform: translateY(0px) rotate(-3deg); }
+      to { transform: translateY(-10px) rotate(4deg); }
+    }
+
+    /* --- TEXTE GÉANT 3D --- */
+    .giant-title {
+      position: relative;
+      z-index: 5;
+      font-size: clamp(2.8rem, 6.8vw, 5.4rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      line-height: 0.95;
+      margin: 0;
+      color: #ffffff;
+      text-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.18),
+        0 4px 0 rgba(0, 0, 0, 0.16),
+        0 6px 0 rgba(0, 0, 0, 0.14),
+        0 8px 0 rgba(0, 0, 0, 0.12),
+        0 10px 0 rgba(0, 0, 0, 0.10),
+        0 18px 32px rgba(0, 0, 0, 0.38);
+    }
+
+    .chapter-tag {
+      position: absolute;
+      top: 28px;
+      left: 36px;
+      z-index: 5;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.22);
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+    }
+
+    .bottom-info {
+      position: absolute;
+      bottom: 26px;
+      left: 36px;
+      right: 36px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      text-align: left;
+      gap: 20px;
+    }
+
+    .bottom-desc {
+      max-width: 340px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .open-project-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #090d16;
+      font-weight: 800;
+      font-size: 0.88rem;
+      text-decoration: none;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .open-project-btn:hover {
+      transform: scale(1.06);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    /* --- BARRE DE NAVIGATION EN BAS --- */
+    footer {
+      padding: 18px 20px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    .nav-dock {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 8px 16px;
+      border-radius: 999px;
+      backdrop-filter: blur(10px);
+    }
+
+    .arrow-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .arrow-btn:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: scale(1.1);
+    }
+
+    .dots-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.35s ease;
+      padding: 0;
+    }
+
+    .nav-dot.active[data-index="0"] {
+      width: 34px;
+      background: #fb923c;
+      box-shadow: 0 0 12px #fb923c;
+    }
+
+    .nav-dot.active[data-index="1"] {
+      width: 34px;
+      background: #f472b6;
+      box-shadow: 0 0 12px #f472b6;
+    }
+
+    .nav-dot.active[data-index="2"] {
+      width: 34px;
+      background: #38bdf8;
+      box-shadow: 0 0 12px #38bdf8;
+    }
+
+    .hint-text {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body class="page-0">
+
+  <!-- HALO LUMINEUX QUI CHANGE AVEC LA PAGE -->
+  <div class="ambient-glow"></div>
+
+  <header>
+    <a class="back-btn" href="competences.html">← Compétences</a>
+    <div class="top-title">Jane Khoury • Digital Media</div>
+  </header>
+
+  <main>
+    <div class="cards-deck" id="deck">
+
+      <!-- PAGE 1 : VIDEO EDITING (ORANGE) -->
+      <section class="media-page theme-orange is-active" data-page="0">
+        <svg class="doodle-layer" viewBox="0 0 880 500" preserveAspectRatio="none" aria-hidden="true">
+          <!-- Caméra de cinéma -->
+          <g class="doodle-float" transform="translate(115, 115) rotate(-12)" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="0" y="24" width="68" height="44" rx="10" fill="rgba(255,255,255,0.08)" />
+            <polygon points="68,34 94,20 94,72 68,58" fill="rgba(255,255,255,0.12)" />
+            <circle cx="20" cy="10" r="13" fill="rgba(255,255,255,0.08)" />
+            <circle cx="50" cy="10" r="13" fill="rgba(255,255,255,0.08)" />
+            <circle cx="20" cy="10" r="3" fill="rgba(255,255,255,0.35)" />
+            <circle cx="50" cy="10" r="3" fill="rgba(255,255,255,0.35)" />
+          </g>
+
+          <!-- Clapier de cinéma -->
+          <g class="doodle-float-slow" transform="translate(680, 75) rotate(14)" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="0" y="26" width="84" height="58" rx="8" fill="rgba(255,255,255,0.08)" />
+            <g transform="rotate(-16 0 26)">
+              <rect x="0" y="8" width="84" height="16" rx="4" fill="rgba(255,255,255,0.14)" />
+              <line x1="16" y1="8" x2="24" y2="24" />
+              <line x1="38" y1="8" x2="46" y2="24" />
+              <line x1="60" y1="8" x2="68" y2="24" />
+            </g>
+            <line x1="12" y1="46" x2="72" y2="46" />
+            <line x1="12" y1="62" x2="54" y2="62" />
+          </g>
+
+          <!-- Souris d'ordinateur -->
+          <g class="doodle-float" transform="translate(715, 285) rotate(-18)" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3.5" stroke-linecap="round">
+            <path d="M 22 0 C 22 -22, 48 -18, 46 -42" />
+            <rect x="0" y="0" width="44" height="68" rx="22" fill="rgba(255,255,255,0.08)" />
+            <line x1="0" y1="26" x2="44" y2="26" />
+            <line x1="22" y1="0" x2="22" y2="26" />
+            <rect x="19" y="8" width="6" height="11" rx="3" fill="rgba(255,255,255,0.35)" />
+          </g>
+
+          <!-- Explosions strass -->
+          <g fill="rgba(255,255,255,0.42)">
+            <g class="strass-twinkle" transform="translate(150, 290)">
+              <path d="M0 -24 L5 -5 L24 0 L5 5 L0 24 L-5 5 L-24 0 L-5 -5 Z" />
+              <circle cx="24" cy="-18" r="3.5" />
+              <circle cx="-22" cy="16" r="3" />
+              <path d="M22 18 L24 12 L26 18 L32 20 L26 22 L24 28 L22 22 L16 20 Z" />
+            </g>
+            <g class="strass-twinkle-delay" transform="translate(440, 78)">
+              <path d="M0 -20 L4 -4 L20 0 L4 4 L0 20 L-4 4 L-20 0 L-4 -4 Z" />
+              <circle cx="-22" cy="-12" r="3" />
+              <circle cx="20" cy="14" r="3.5" />
+            </g>
+            <g class="strass-twinkle" transform="translate(595, 175)">
+              <path d="M0 -18 L4 -4 L18 0 L4 4 L0 18 L-4 4 L-18 0 L-4 -4 Z" />
+              <circle cx="18" cy="-14" r="2.8" />
+              <circle cx="-16" cy="14" r="2.8" />
+            </g>
+            <path class="strass-twinkle-delay" d="M285 110 L288 100 L291 110 L301 113 L291 116 L288 126 L285 116 L275 113 Z" />
+            <path class="strass-twinkle" d="M540 365 L543 354 L546 365 L557 368 L546 371 L543 382 L540 371 L529 368 Z" />
+          </g>
+        </svg>
+
+        <span class="chapter-tag">01 • Video Editing</span>
+        <h1 class="giant-title">VIDEO<br>EDITING</h1>
+        <div class="bottom-info">
+          <div class="bottom-desc">Montage dynamique, étalonnage couleur, sound design et storytelling visuel.</div>
+          <a class="open-project-btn" href="video-editing.html">Ouvrir le projet →</a>
+        </div>
+      </section>
+
+      <!-- PAGE 2 : ANIMATION (ROSE + POURSUITE TRANSPARENTE & NUAGES) -->
+      <section class="media-page theme-pink" data-page="1">
+        <svg class="doodle-layer" viewBox="0 0 880 500" preserveAspectRatio="none" aria-hidden="true">
+          <!-- Nuages cotonneux -->
+          <g class="cloud-drift-1" transform="translate(0, 78)" fill="rgba(255,255,255,0.22)">
+            <path d="M 30 50 Q 10 50 10 34 Q 10 18 28 18 Q 36 4 58 6 Q 78 6 86 22 Q 106 22 106 38 Q 106 50 86 50 Z" />
+            <circle cx="122" cy="40" r="8" />
+          </g>
+
+          <g class="cloud-drift-2" transform="translate(0, 155) scale(1.2)" fill="rgba(255,255,255,0.16)">
+            <path d="M 25 44 Q 8 44 8 30 Q 8 16 24 16 Q 32 4 50 6 Q 68 6 74 20 Q 92 20 92 34 Q 92 44 74 44 Z" />
+          </g>
+
+          <!-- Scène de poursuite -->
+          <g class="chase-track" transform="translate(0, 325)">
+            <g fill="rgba(255,255,255,0.26)">
+              <circle cx="-18" cy="44" r="7" />
+              <circle cx="-6" cy="48" r="5" />
+              <circle cx="115" cy="45" r="8" />
+              <circle cx="128" cy="49" r="5" />
+            </g>
+
+            <g class="chaser-bounce" transform="translate(15, 0)" stroke="rgba(255,255,255,0.38)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+              <circle cx="24" cy="10" r="9" fill="rgba(255,255,255,0.16)" />
+              <path d="M 15 8 Q 2 4 -6 10" />
+              <line x1="24" y1="19" x2="32" y2="36" />
+              <polyline points="28,24 42,20 48,14" />
+              <polyline points="26,25 14,30 8,24" />
+              <polyline points="32,36 44,42 50,52" />
+              <polyline points="32,36 20,44 10,42" />
+            </g>
+
+            <g stroke="rgba(255,255,255,0.32)" stroke-width="2.5" stroke-linecap="round">
+              <line x1="75" y1="18" x2="96" y2="18" />
+              <line x1="70" y1="28" x2="90" y2="28" />
+            </g>
+
+            <g class="runner-bounce" transform="translate(145, -2)" stroke="rgba(255,255,255,0.42)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+              <circle cx="24" cy="10" r="9" fill="rgba(255,255,255,0.2)" />
+              <path d="M 20 20 Q 4 16 -8 24" />
+              <line x1="24" y1="19" x2="30" y2="36" />
+              <polyline points="27,24 40,16 46,8" />
+              <polyline points="25,24 14,16 10,8" />
+              <polyline points="30,36 42,40 48,50" />
+              <polyline points="30,36 18,45 10,46" />
+            </g>
+          </g>
+        </svg>
+
+        <span class="chapter-tag">02 • Animation</span>
+        <h1 class="giant-title">ANIMATION</h1>
+        <div class="bottom-info">
+          <div class="bottom-desc">Motion design 2D/3D, animation de personnages, effets spéciaux et micro-interactions.</div>
+          <a class="open-project-btn" href="animation.html">Ouvrir le projet →</a>
+        </div>
+      </section>
+
+      <!-- PAGE 3 : GRAPHIC DESIGN (BLEU CLAIR) -->
+      <section class="media-page theme-blue" data-page="2">
+        <svg class="doodle-layer" viewBox="0 0 880 500" preserveAspectRatio="none" aria-hidden="true">
+          <!-- Plume vectorielle -->
+          <g class="doodle-float" transform="translate(120, 105) rotate(-15)" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3.5" stroke-linejoin="round">
+            <polygon points="35,0 65,45 50,75 20,75 5,45" fill="rgba(255,255,255,0.08)" />
+            <line x1="35" y1="0" x2="35" y2="42" />
+            <circle cx="35" cy="45" r="5" fill="rgba(255,255,255,0.35)" />
+            <rect x="18" y="75" width="34" height="12" rx="3" />
+          </g>
+
+          <!-- Palette de couleurs -->
+          <g class="doodle-float-slow" transform="translate(690, 95) rotate(12)" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3.5">
+            <path d="M 45 5 C 72 5 90 24 90 48 C 90 66 76 76 62 74 C 52 72 50 62 56 56 C 62 50 56 42 46 46 C 34 52 24 72 10 62 C -2 52 4 5 45 5 Z" fill="rgba(255,255,255,0.08)" />
+            <circle cx="28" cy="28" r="5" fill="rgba(255,255,255,0.3)" />
+            <circle cx="48" cy="22" r="5" fill="rgba(255,255,255,0.3)" />
+            <circle cx="68" cy="30" r="5" fill="rgba(255,255,255,0.3)" />
+          </g>
+
+          <!-- Étoiles géométriques -->
+          <g fill="rgba(255,255,255,0.32)">
+            <path class="strass-twinkle" d="M220 330 L224 316 L228 330 L242 334 L228 338 L224 352 L220 338 L206 334 Z" />
+            <path class="strass-twinkle-delay" d="M645 310 L649 298 L653 310 L665 314 L653 318 L649 330 L645 318 L633 314 Z" />
+          </g>
+        </svg>
+
+        <span class="chapter-tag">03 • Graphic Design</span>
+        <h1 class="giant-title">GRAPHIC<br>DESIGN</h1>
+        <div class="bottom-info">
+          <div class="bottom-desc">Identités visuelles, logos, affiches, miniatures et design d'interfaces modernes.</div>
+          <a class="open-project-btn" href="graphic-design.html">Ouvrir le projet →</a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="nav-dock">
+      <button class="arrow-btn" id="prev-btn" type="button" aria-label="Page précédente">←</button>
+      <div class="dots-row">
+        <button class="nav-dot active" type="button" data-index="0" title="Video Editing"></button>
+        <button class="nav-dot" type="button" data-index="1" title="Animation"></button>
+        <button class="nav-dot" type="button" data-index="2" title="Graphic Design"></button>
+      </div>
+      <button class="arrow-btn" id="next-btn" type="button" aria-label="Page suivante">→</button>
+    </div>
+    <div class="hint-text">Clique sur la page ou utilise les flèches pour passer à la suivante</div>
+  </footer>
+
+  <script>
+    const body = document.body;
+    const deck = document.getElementById("deck");
+    const pages = Array.from(document.querySelectorAll(".media-page"));
+    const dots = Array.from(document.querySelectorAll(".nav-dot"));
+
+    let currentIndex = 0;
+
+    function showSlide(targetIndex) {
+      const total = pages.length;
+      const nextIndex = ((targetIndex % total) + total) % total;
+      const prevIndex = currentIndex;
+
+      currentIndex = nextIndex;
+      body.className = `page-${currentIndex}`;
+
+      pages.forEach((page, i) => {
+        page.classList.remove("is-active", "is-prev");
+
+        if (i === currentIndex) {
+          page.classList.add("is-active");
+        } else if (i === prevIndex && prevIndex !== currentIndex) {
+          page.classList.add("is-prev");
+        }
+      });
+
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("active", i === currentIndex);
+      });
+    }
+
+    // Clic directement sur la carte pour faire arriver la page suivante devant
+    deck.addEventListener("click", (e) => {
+      if (e.target.closest(".open-project-btn")) return;
+      showSlide(currentIndex + 1);
+    });
+
+    // Boutons flèches
+    document.getElementById("next-btn").addEventListener("click", () => {
+      showSlide(currentIndex + 1);
+    });
+
+    document.getElementById("prev-btn").addEventListener("click", () => {
+      showSlide(currentIndex - 1);
+    });
+
+    // Points de navigation en bas
+    dots.forEach((dot, i) => {
+      dot.addEventListener("click", () => {
+        showSlide(i);
+      });
+    });
+
+    // Touches fléchées du clavier
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") showSlide(currentIndex + 1);
+      if (e.key === "ArrowLeft") showSlide(currentIndex - 1);
+    });
+  </script>
+</body>
+</html>

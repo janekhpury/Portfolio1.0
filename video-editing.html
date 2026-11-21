@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Editing - Jane Khoury</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+      background: #120b06;
+      user-select: none;
+    }
+
+    /* --- DÉCOR DU HALL DE CINÉMA (MUR BEIGE + CÔTÉS SOMBRES + TAPIS ROUGE) --- */
+    .cinema-hall {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+
+    /* Plafond sombre */
+    .cinema-ceiling {
+      height: 8%;
+      background: linear-gradient(180deg, #060403 0%, #17100b 100%);
+      border-bottom: 3px solid #0d0805;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
+      z-index: 2;
+    }
+
+    /* Mur beige/ocre avec côtés très assombris pour l'ambiance cinéma */
+    .cinema-wall {
+      flex: 1;
+      position: relative;
+      background-color: #a67843;
+      background-image:
+        /* Vignette sombre sur les côtés gauche et droit */
+        radial-gradient(ellipse at 50% 48%, rgba(255, 224, 175, 0.28) 0%, rgba(45, 26, 10, 0.45) 55%, rgba(6, 3, 1, 0.94) 92%),
+        /* Dégradé beige chaud de base */
+        linear-gradient(180deg, #7c5429 0%, #b5864f 45%, #82582c 100%);
+    }
+
+    /* Texture papier peint discret sur le mur beige */
+    .cinema-wall::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.13;
+      background-image: radial-gradient(#381f08 1.5px, transparent 1.5px), radial-gradient(#381f08 1.5px, #a67843 1.5px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+    }
+
+    /* Assombrissement supplémentaire des bords latéraux de tout l'écran */
+    .cinema-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        rgba(4, 2, 1, 0.88) 0%,
+        rgba(4, 2, 1, 0.25) 18%,
+        transparent 32%,
+        transparent 68%,
+        rgba(4, 2, 1, 0.25) 82%,
+        rgba(4, 2, 1, 0.88) 100%
+      );
+    }
+
+    /* Plinthe en bois sombre */
+    .cinema-baseboard {
+      height: 18px;
+      background: linear-gradient(180deg, #241308 0%, #120803 65%, #080301 100%);
+      border-top: 2px solid #422612;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.6);
+      z-index: 2;
+    }
+
+    /* Tapis rouge cinéma */
+    .cinema-carpet {
+      height: 12%;
+      position: relative;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(255, 110, 110, 0.22) 0%, transparent 68%),
+        repeating-linear-gradient(
+          90deg,
+          #6e0d14 0px,
+          #8a121a 28px,
+          #57090e 56px
+        );
+      box-shadow: inset 0 14px 28px rgba(0, 0, 0, 0.78);
+    }
+
+    .cinema-carpet::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.16;
+      background-image: radial-gradient(#fbbf24 1.5px, transparent 1.5px);
+      background-size: 26px 20px;
+    }
+
+    /* --- EN-TÊTE --- */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
+      border-radius: 12px;
+      background: rgba(12, 8, 5, 0.78);
+      border: 1px solid rgba(255, 224, 178, 0.28);
+      color: #fff7ed;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-4px);
+      background: rgba(12, 8, 5, 0.95);
+    }
+
+    .hall-badge {
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(12, 8, 5, 0.78);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fde68a;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+    }
+
+    /* --- GALERIE MURALE (3 GRANDS POSTERS + PROJECTEURS ENTRE CHAQUE) --- */
+    main {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 74px;
+    }
+
+    /* Largeur calibrée pour afficher 3 grands posters (305px) + 2 projecteurs muraux (54px) */
+    .poster-gallery-viewport {
+      width: 100%;
+      max-width: 1050px;
+      overflow: hidden;
+      padding: 24px 12px 28px;
+    }
+
+    .poster-track {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    /* --- PROJECTEUR / APPLIQUE LUMINEUSE MURALE ENTRE LES POSTERS --- */
+    .wall-sconce {
+      flex: 0 0 36px;
+      height: 360px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    /* Faisceau lumineux chaud projeté sur le mur vers le haut et le bas */
+    .wall-sconce::before {
+      content: "";
+      position: absolute;
+      width: 150px;
+      height: 380px;
+      background: radial-gradient(
+        ellipse at 50% 50%,
+        rgba(255, 232, 175, 0.55) 0%,
+        rgba(251, 191, 36, 0.22) 38%,
+        transparent 72%
+      );
+      filter: blur(8px);
+      z-index: 0;
+    }
+
+    /* Corps métallique du petit projecteur mural */
+    .sconce-fixture {
+      position: relative;
+      z-index: 2;
+      width: 12px;
+      height: 46px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #18181b, #3f3f46, #18181b);
+      border: 1px solid #52525b;
+      box-shadow:
+        0 0 18px rgba(253, 224, 71, 0.85),
+        0 6px 14px rgba(0, 0, 0, 0.75);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 0;
+    }
+
+    /* Lentilles lumineuses haut & bas du projecteur */
+    .sconce-fixture::before,
+    .sconce-fixture::after {
+      content: "";
+      width: 8px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fef9c3;
+      box-shadow: 0 0 12px 4px rgba(253, 224, 71, 0.95);
+    }
+
+    /* --- GRANDS POSTERS EN CAISSON LUMINEUX NOIR --- */
+    .poster-frame {
+      flex: 0 0 305px;
+      height: 445px;
+      background: #09090b;
+      padding: 15px;
+      border-radius: 7px;
+      border: 3px solid #1f1f24;
+      box-shadow:
+        0 26px 45px rgba(0, 0, 0, 0.78),
+        0 8px 18px rgba(0, 0, 0, 0.65),
+        inset 0 0 14px rgba(255, 255, 255, 0.14);
+      text-decoration: none;
+      color: #ffffff;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      z-index: 2;
+      transition:
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.35s ease,
+        border-color 0.35s ease;
+    }
+
+    .poster-frame.is-selected,
+    .poster-frame:hover {
+      transform: translateY(-10px) scale(1.045);
+      border-color: #fbbf24;
+      box-shadow:
+        0 34px 60px rgba(0, 0, 0, 0.88),
+        0 0 36px rgba(255, 225, 150, 0.5),
+        inset 0 0 18px rgba(255, 255, 255, 0.25);
+      z-index: 5;
+    }
+
+    .poster-screen {
+      position: relative;
+      flex: 1;
+      border-radius: 3px;
+      overflow: hidden;
+      background: #18181b;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .poster-screen img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.45s ease;
+    }
+
+    .poster-frame:hover .poster-screen img {
+      transform: scale(1.06);
+    }
+
+    /* Reflet vitré en diagonale */
+    .poster-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        130deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.04) 38%,
+        transparent 42%
+      );
+      pointer-events: none;
+    }
+
+    .yt-play-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.88);
+      width: 62px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(220, 38, 38, 0.94);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.68);
+      opacity: 0.88;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 2;
+    }
+
+    .yt-play-badge::before {
+      content: "";
+      border-style: solid;
+      border-width: 10px 0 10px 18px;
+      border-color: transparent transparent transparent #ffffff;
+      margin-left: 3px;
+    }
+
+    .poster-frame:hover .yt-play-badge,
+    .poster-frame.is-selected .yt-play-badge {
+      transform: translate(-50%, -50%) scale(1.08);
+      opacity: 1;
+    }
+
+    .poster-caption {
+      position: relative;
+      z-index: 2;
+      padding: 16px 14px 14px;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.9) 45%, #000000 100%);
+    }
+
+    .poster-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      color: #fbbf24;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .poster-title {
+      font-size: 1.08rem;
+      font-weight: 800;
+      margin: 0;
+      line-height: 1.25;
+      color: #ffffff;
+    }
+
+    /* --- FLÈCHES GAUCHE & DROITE --- */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(251, 191, 36, 0.6);
+      background: rgba(12, 8, 5, 0.86);
+      color: #fde68a;
+      font-size: 1.45rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      z-index: 20;
+    }
+
+    .nav-arrow:hover {
+      background: #fbbf24;
+      color: #140c05;
+      border-color: #ffffff;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .nav-arrow.left { left: 20px; }
+    .nav-arrow.right { right: 20px; }
+
+    /* --- PIED DE PAGE SUR LE TAPIS ROUGE --- */
+    footer {
+      position: relative;
+      z-index: 10;
+      padding: 8px 20px 14px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: rgba(255, 247, 237, 0.9);
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+    }
+
+    @media (max-width: 1120px) {
+      .poster-gallery-viewport { max-width: 690px; }
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 0 46px; }
+      .poster-gallery-viewport { max-width: 325px; }
+      .nav-arrow {
+        width: 44px;
+        height: 44px;
+        font-size: 1.15rem;
+      }
+      .nav-arrow.left { left: 8px; }
+      .nav-arrow.right { right: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ARRIÈRE-PLAN HALL DE CINÉMA (MUR BEIGE + PLINTHE + TAPIS ROUGE) -->
+  <div class="cinema-hall" aria-hidden="true">
+    <div class="cinema-ceiling"></div>
+    <div class="cinema-wall"></div>
+    <div class="cinema-baseboard"></div>
+    <div class="cinema-carpet"></div>
+  </div>
+
+  <!-- ASSOMBRISSEMENT DES CÔTÉS POUR L'AMBIANCE CINÉMA -->
+  <div class="cinema-vignette" aria-hidden="true"></div>
+
+  <header>
+    <a class="back-btn" href="digital-media.html">← Retour à Digital Media</a>
+    <div class="hall-badge">🎬 Cinema Hall • Video Editing</div>
+  </header>
+
+  <main>
+    <button class="nav-arrow left" id="btn-left" type="button" aria-label="Affiche précédente">←</button>
+
+    <div class="poster-gallery-viewport" id="viewport">
+      <div class="poster-track" id="track">
+
+        <!-- AFFICHE 1 -->
+        <a class="poster-frame" href="https://www.youtube.com/" target="_blank" rel="noopener">
+          <div class="poster-screen">
+            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80" alt="Affiche Montage 1" />
+            <div class="yt-play-badge"></div>
+            <div class="poster-caption">
+              <span class="poster-tag">Montage #01</span>
+              <h3 class="poster-title">Cinematic Trailer</h3>
+            </div>
+          </div>
+        </a>
+
+        <!-- PROJECTEUR MURAL ENTRE AFFICHE 1 ET 2 -->
+        <div class="wall-sconce" aria-hidden="true"><div class="sconce-fixture"></div></div>
+
+        <!-- AFFICHE 2 (Sélectionnée au centre par défaut) -->
+        <a class="poster-frame is-selected" href="https://www.youtube.com/" target="_blank" rel="noopener">
+          <div class="poster-screen">
+            <img src="https://images.unsplash.com/photo-1574267432553-4b4628081c31?auto=format&fit=crop&w=600&q=80" alt="Affiche Montage 2" />
+            <div class="yt-play-badge"></div>
+            <div class="poster-caption">
+              <span class="poster-tag">Montage #02</span>
+              <h3 class="poster-title">Action & Rhythm Edit</h3>
+            </div>
+          </div>
+        </a>
+
+        <!-- PROJECTEUR MURAL ENTRE AFFICHE 2 ET 3 -->
+        <div class="wall-sconce" aria-hidden="true"><div class="sconce-fixture"></div></div>
+
+        <!-- AFFICHE 3 -->
+        <a class="poster-frame" href="https://www.youtube.com/" target="_blank" rel="noopener">
+          <div class="poster-screen">
+            <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=600&q=80" alt="Affiche Montage 3" />
+            <div class="yt-play-badge"></div>
+            <div class="poster-caption">
+              <span class="poster-tag">Montage #03</span>
+              <h3 class="poster-title">Short Film & Color</h3>
+            </div>
+          </div>
+        </a>
+
+        <!-- PROJECTEUR MURAL ENTRE AFFICHE 3 ET 4 -->
+        <div class="wall-sconce" aria-hidden="true"><div class="sconce-fixture"></div></div>
+
+        <!-- AFFICHE 4 -->
+        <a class="poster-frame" href="https://www.youtube.com/" target="_blank" rel="noopener">
+          <div class="poster-screen">
+            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80" alt="Affiche Montage 4" />
+            <div class="yt-play-badge"></div>
+            <div class="poster-caption">
+              <span class="poster-tag">Montage #04</span>
+              <h3 class="poster-title">Gaming Highlight</h3>
+            </div>
+          </div>
+        </a>
+
+        <!-- PROJECTEUR MURAL ENTRE AFFICHE 4 ET 5 -->
+        <div class="wall-sconce" aria-hidden="true"><div class="sconce-fixture"></div></div>
+
+        <!-- AFFICHE 5 -->
+        <a class="poster-frame" href="https://www.youtube.com/" target="_blank" rel="noopener">
+          <div class="poster-screen">
+            <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=600&q=80" alt="Affiche Montage 5" />
+            <div class="yt-play-badge"></div>
+            <div class="poster-caption">
+              <span class="poster-tag">Montage #05</span>
+              <h3 class="poster-title">Creative Visual Story</h3>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <button class="nav-arrow right" id="btn-right" type="button" aria-label="Affiche suivante">→</button>
+  </main>
+
+  <footer>
+    Utilise les flèches ← → pour parcourir le mur • Clique sur une affiche pour regarder la vidéo sur YouTube
+  </footer>
+
+  <script>
+    const track = document.getElementById("track");
+    const viewport = document.getElementById("viewport");
+    const posters = Array.from(document.querySelectorAll(".poster-frame"));
+    const btnLeft = document.getElementById("btn-left");
+    const btnRight = document.getElementById("btn-right");
+
+    let selectedIndex = 1;
+
+    function updateGallery() {
+      posters.forEach((poster, i) => {
+        poster.classList.toggle("is-selected", i === selectedIndex);
+      });
+
+      const activePoster = posters[selectedIndex];
+      const viewportWidth = viewport.offsetWidth;
+      const trackWidth = track.scrollWidth;
+
+      if (trackWidth <= viewportWidth) {
+        track.style.transform = "translateX(0px)";
+        return;
+      }
+
+      const posterCenter = activePoster.offsetLeft + activePoster.offsetWidth / 2;
+      let offset = viewportWidth / 2 - posterCenter;
+      const maxOffset = 0;
+      const minOffset = viewportWidth - trackWidth;
+
+      offset = Math.max(minOffset, Math.min(maxOffset, offset));
+      track.style.transform = `translateX(${offset}px)`;
+    }
+
+    btnRight.addEventListener("click", () => {
+      selectedIndex = (selectedIndex + 1) % posters.length;
+      updateGallery();
+    });
+
+    btnLeft.addEventListener("click", () => {
+      selectedIndex = (selectedIndex - 1 + posters.length) % posters.length;
+      updateGallery();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") {
+        selectedIndex = (selectedIndex + 1) % posters.length;
+        updateGallery();
+      } else if (e.key === "ArrowLeft") {
+        selectedIndex = (selectedIndex - 1 + posters.length) % posters.length;
+        updateGallery();
+      }
+    });
+
+    window.addEventListener("resize", updateGallery);
+    updateGallery();
+  </script>
+</body>
+</html>

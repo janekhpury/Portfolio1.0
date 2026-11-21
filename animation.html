@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animation - Jane Khoury</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+      user-select: none;
+      /* Fond rose lumineux et vibrant (beaucoup moins sombre) */
+      background: radial-gradient(
+        circle at 50% 42%,
+        #f9a8d4 0%,
+        #ec4899 42%,
+        #9d174d 82%,
+        #500724 100%
+      );
+    }
+
+    /* Halos lumineux doux qui respirent en arrière-plan */
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+      animation: pulse-glow 7s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      top: -120px;
+      left: -80px;
+      background: rgba(253, 242, 248, 0.45);
+    }
+
+    .orb-2 {
+      width: 580px;
+      height: 580px;
+      bottom: -140px;
+      right: -100px;
+      background: rgba(244, 114, 182, 0.55);
+      animation-delay: -3.5s;
+    }
+
+    @keyframes pulse-glow {
+      from { transform: scale(0.95); opacity: 0.65; }
+      to { transform: scale(1.1); opacity: 0.95; }
+    }
+
+    /* --- SCÈNE ANIMÉE EN ARRIÈRE-PLAN (NUAGES, POURSUITE, ÉTOILES, SPIRALES) --- */
+    .bg-animation-stage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .cloud-slow {
+      animation: drift-across 26s linear infinite;
+    }
+
+    .cloud-medium {
+      animation: drift-across 19s linear infinite -8s;
+    }
+
+    .cloud-fast {
+      animation: drift-across 14s linear infinite -4s;
+    }
+
+    @keyframes drift-across {
+      from { transform: translateX(1520px); }
+      to { transform: translateX(-320px); }
+    }
+
+    .chase-loop {
+      animation: run-across 11s linear infinite;
+    }
+
+    @keyframes run-across {
+      0% { transform: translateX(-280px); }
+      100% { transform: translateX(1560px); }
+    }
+
+    .hop-a {
+      animation: character-hop 0.34s ease-in-out infinite alternate;
+    }
+
+    .hop-b {
+      animation: character-hop 0.3s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes character-hop {
+      from { transform: translateY(0px) rotate(-4deg); }
+      to { transform: translateY(-11px) rotate(4deg); }
+    }
+
+    .twinkle {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: star-pulse 2.6s ease-in-out infinite;
+    }
+
+    .twinkle-delay {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: star-pulse 3.2s ease-in-out infinite 1.2s;
+    }
+
+    @keyframes star-pulse {
+      0%, 100% { transform: scale(0.8) rotate(0deg); opacity: 0.45; }
+      50% { transform: scale(1.25) rotate(20deg); opacity: 0.95; }
+    }
+
+    /* --- EN-TÊTE --- */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(80, 7, 36, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.92rem;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-4px);
+      background: rgba(80, 7, 36, 0.7);
+    }
+
+    .studio-badge {
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(80, 7, 36, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.84rem;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+    }
+
+    /* --- PELLICULE FLOTTANTE CENTRALE --- */
+    main {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .filmstrip-wrapper {
+      width: 100%;
+      position: relative;
+      animation: film-float 5.5s ease-in-out infinite;
+    }
+
+    @keyframes film-float {
+      0%, 100% { transform: translateY(0px) rotate(-0.8deg); }
+      50% { transform: translateY(-10px) rotate(0.8deg); }
+    }
+
+    .filmstrip-wrapper:hover {
+      animation-play-state: paused;
+    }
+
+    .filmstrip-belt {
+      width: 100%;
+      padding: 20px 0;
+      background: rgba(24, 10, 22, 0.88);
+      backdrop-filter: blur(12px);
+      border-top: 3px solid rgba(255, 255, 255, 0.35);
+      border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+      box-shadow:
+        0 28px 65px rgba(80, 7, 36, 0.55),
+        0 0 40px rgba(255, 255, 255, 0.22);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Perforations lumineuses de pellicule cinéma */
+    .sprocket-holes {
+      height: 16px;
+      width: 100%;
+      background-image: repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 18px,
+        rgba(253, 242, 248, 0.75) 18px,
+        rgba(253, 242, 248, 0.75) 38px
+      );
+      animation: sprocket-scroll 14s linear infinite;
+    }
+
+    @keyframes sprocket-scroll {
+      from { background-position-x: 0px; }
+      to { background-position-x: 380px; }
+    }
+
+    .film-viewport {
+      width: min(1020px, 86vw);
+      margin: 0 auto;
+      overflow: hidden;
+      padding: 12px 8px;
+    }
+
+    .film-track {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Chaque case (Frame) de la pellicule */
+    .film-cell {
+      flex: 0 0 310px;
+      height: 330px;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      border: 3px solid rgba(249, 168, 212, 0.45);
+      background: #231020;
+      text-decoration: none;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+      transition:
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.35s ease,
+        box-shadow 0.35s ease;
+    }
+
+    .film-cell.is-selected,
+    .film-cell:hover {
+      transform: translateY(-8px) scale(1.04);
+      border-color: #ffffff;
+      box-shadow:
+        0 22px 45px rgba(80, 7, 36, 0.7),
+        0 0 28px rgba(255, 255, 255, 0.55);
+      z-index: 4;
+    }
+
+    .film-cell img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.45s ease;
+    }
+
+    .film-cell:hover img {
+      transform: scale(1.06);
+    }
+
+    /* Badge Play au centre */
+    .play-pill {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(236, 72, 153, 0.92);
+      border: 2px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      opacity: 0.9;
+      transition: transform 0.25s ease, background 0.25s ease;
+      z-index: 2;
+    }
+
+    .play-pill::before {
+      content: "";
+      border-style: solid;
+      border-width: 9px 0 9px 16px;
+      border-color: transparent transparent transparent #ffffff;
+      margin-left: 4px;
+    }
+
+    .film-cell:hover .play-pill {
+      transform: translate(-50%, -50%) scale(1.1);
+      background: #db2777;
+    }
+
+    .film-cell-info {
+      position: relative;
+      z-index: 2;
+      padding: 18px 16px 15px;
+      background: linear-gradient(180deg, transparent 0%, rgba(24, 6, 20, 0.92) 48%, #140410 100%);
+    }
+
+    .film-cell-info span {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #f9a8d4;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+    }
+
+    .film-cell-info h3 {
+      margin: 4px 0 0;
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    /* --- FLÈCHES GAUCHE & DROITE --- */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      background: rgba(80, 7, 36, 0.75);
+      color: #ffffff;
+      font-size: 1.35rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(80, 7, 36, 0.5);
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+      z-index: 20;
+    }
+
+    .nav-arrow:hover {
+      background: #ffffff;
+      color: #9d174d;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .nav-arrow.left { left: 22px; }
+    .nav-arrow.right { right: 22px; }
+
+    /* --- PIED DE PAGE --- */
+    footer {
+      position: relative;
+      z-index: 10;
+      padding: 12px 20px 20px;
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fdf2f8;
+      text-shadow: 0 2px 8px rgba(80, 7, 36, 0.65);
+    }
+
+    @media (max-width: 1080px) {
+      .film-viewport { max-width: 664px; }
+    }
+
+    @media (max-width: 720px) {
+      .film-viewport { max-width: 326px; }
+      .nav-arrow {
+        width: 42px;
+        height: 42px;
+        font-size: 1.1rem;
+      }
+      .nav-arrow.left { left: 8px; }
+      .nav-arrow.right { right: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HALOS LUMINEUX EN ARRIÈRE-PLAN -->
+  <div class="glow-orb orb-1" aria-hidden="true"></div>
+  <div class="glow-orb orb-2" aria-hidden="true"></div>
+
+  <!-- ANIMATION EN ARRIÈRE-PLAN (NUAGES + POURSUITE + ÉTOILES SCINTILLANTES) -->
+  <svg class="bg-animation-stage" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <!-- Nuage cotonneux 1 (haut) -->
+    <g class="cloud-slow" transform="translate(0, 95)" fill="rgba(255, 255, 255, 0.28)">
+      <path d="M 40 68 Q 12 68 12 46 Q 12 24 38 24 Q 48 4 78 7 Q 106 7 116 29 Q 144 29 144 51 Q 144 68 116 68 Z" />
+      <circle cx="166" cy="54" r="11" />
+    </g>
+
+    <!-- Nuage cotonneux 2 (milieu haut) -->
+    <g class="cloud-medium" transform="translate(0, 185) scale(1.25)" fill="rgba(255, 255, 255, 0.2)">
+      <path d="M 35 60 Q 10 60 10 40 Q 10 20 32 20 Q 42 4 68 7 Q 92 7 100 26 Q 124 26 124 45 Q 124 60 100 60 Z" />
+    </g>
+
+    <!-- Nuage cotonneux 3 (bas) -->
+    <g class="cloud-fast" transform="translate(0, 640) scale(1.1)" fill="rgba(255, 255, 255, 0.24)">
+      <path d="M 35 60 Q 10 60 10 40 Q 10 20 32 20 Q 42 4 68 7 Q 92 7 100 26 Q 124 26 124 45 Q 124 60 100 60 Z" />
+    </g>
+
+    <!-- Étoiles / strass scintillants en fond -->
+    <g fill="rgba(255, 255, 255, 0.55)">
+      <path class="twinkle" d="M220 150 L225 132 L230 150 L248 155 L230 160 L225 178 L220 160 L202 155 Z" />
+      <path class="twinkle-delay" d="M1180 140 L1185 122 L1190 140 L1208 145 L1190 150 L1185 168 L1180 150 L1162 145 Z" />
+      <path class="twinkle" d="M360 680 L364 666 L368 680 L382 684 L368 688 L364 702 L360 688 L346 684 Z" />
+      <path class="twinkle-delay" d="M1060 670 L1065 652 L1070 670 L1088 675 L1070 680 L1065 698 L1060 680 L1042 675 Z" />
+      <circle cx="520" cy="120" r="4" />
+      <circle cx="910" cy="165" r="5" />
+      <circle cx="740" cy="710" r="4.5" />
+    </g>
+
+    <!-- Course-poursuite animée dans le ciel inférieur derrière la pellicule -->
+    <g class="chase-loop" transform="translate(0, 665)">
+      <!-- Petits nuages de poussière -->
+      <g fill="rgba(255, 255, 255, 0.35)">
+        <circle cx="-22" cy="54" r="9" />
+        <circle cx="-8" cy="59" r="6" />
+        <circle cx="145" cy="55" r="10" />
+        <circle cx="162" cy="60" r="6" />
+      </g>
+
+      <!-- Poursuivant -->
+      <g class="hop-a" transform="translate(15, 0)" stroke="rgba(255, 255, 255, 0.55)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <circle cx="28" cy="12" r="11" fill="rgba(255, 255, 255, 0.25)" />
+        <path d="M 17 10 Q 2 5 -8 12" />
+        <line x1="28" y1="23" x2="38" y2="44" />
+        <polyline points="33,29 50,24 58,16" />
+        <polyline points="30,30 16,36 8,29" />
+        <polyline points="38,44 52,52 60,64" />
+        <polyline points="38,44 24,54 12,52" />
+      </g>
+
+      <!-- Lignes de vitesse -->
+      <g stroke="rgba(255, 255, 255, 0.45)" stroke-width="3" stroke-linecap="round">
+        <line x1="92" y1="22" x2="118" y2="22" />
+        <line x1="86" y1="34" x2="112" y2="34" />
+      </g>
+
+      <!-- Personnage poursuivi -->
+      <g class="hop-b" transform="translate(175, -2)" stroke="rgba(255, 255, 255, 0.6)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <circle cx="28" cy="12" r="11" fill="rgba(255, 255, 255, 0.3)" />
+        <path d="M 24 24 Q 4 19 -10 29" />
+        <line x1="28" y1="23" x2="36" y2="44" />
+        <polyline points="32,29 48,19 56,9" />
+        <polyline points="30,29 16,19 11,9" />
+        <polyline points="36,44 50,49 58,62" />
+        <polyline points="36,44 22,55 12,56" />
+      </g>
+    </g>
+  </svg>
+
+  <header>
+    <a class="back-btn" href="digital-media.html">← Retour à Digital Media</a>
+    <div class="studio-badge">✨ Motion & Animation Reel</div>
+  </header>
+
+  <main>
+    <button class="nav-arrow left" id="btn-left" type="button" aria-label="Animation précédente">←</button>
+
+    <div class="filmstrip-wrapper">
+      <div class="filmstrip-belt">
+        <div class="sprocket-holes"></div>
+
+        <div class="film-viewport" id="viewport">
+          <div class="film-track" id="track">
+
+            <!-- FRAME 1 : Remplace href par ton lien YouTube et src par l'image de ton animation -->
+            <a class="film-cell" href="https://www.youtube.com/" target="_blank" rel="noopener">
+              <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" alt="Animation 1" />
+              <div class="play-pill"></div>
+              <div class="film-cell-info">
+                <span>24 FPS • 2D Animation</span>
+                <h3>2D Character Chase</h3>
+              </div>
+            </a>
+
+            <!-- FRAME 2 (Sélectionnée au centre par défaut) -->
+            <a class="film-cell is-selected" href="https://www.youtube.com/" target="_blank" rel="noopener">
+              <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=600&q=80" alt="Animation 2" />
+              <div class="play-pill"></div>
+              <div class="film-cell-info">
+                <span>60 FPS • Blender 3D</span>
+                <h3>3D Motion Loop</h3>
+              </div>
+            </a>
+
+            <!-- FRAME 3 -->
+            <a class="film-cell" href="https://www.youtube.com/" target="_blank" rel="noopener">
+              <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="Animation 3" />
+              <div class="play-pill"></div>
+              <div class="film-cell-info">
+                <span>Game Dev • Sprites</span>
+                <h3>Game Sprite Rigging</h3>
+              </div>
+            </a>
+
+            <!-- FRAME 4 -->
+            <a class="film-cell" href="https://www.youtube.com/" target="_blank" rel="noopener">
+              <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80" alt="Animation 4" />
+              <div class="play-pill"></div>
+              <div class="film-cell-info">
+                <span>After Effects • FX</span>
+                <h3>Motion Graphics Intro</h3>
+              </div>
+            </a>
+
+          </div>
+        </div>
+
+        <div class="sprocket-holes"></div>
+      </div>
+    </div>
+
+    <button class="nav-arrow right" id="btn-right" type="button" aria-label="Animation suivante">→</button>
+  </main>
+
+  <footer>
+    Utilise les flèches ← → pour faire défiler la pellicule • Clique sur une scène pour voir la vidéo
+  </footer>
+
+  <script>
+    const track = document.getElementById("track");
+    const viewport = document.getElementById("viewport");
+    const cells = Array.from(document.querySelectorAll(".film-cell"));
+    const btnLeft = document.getElementById("btn-left");
+    const btnRight = document.getElementById("btn-right");
+
+    let selectedIndex = 1;
+
+    function updateFilmstrip() {
+      cells.forEach((cell, i) => {
+        cell.classList.toggle("is-selected", i === selectedIndex);
+      });
+
+      const activeCell = cells[selectedIndex];
+      const viewportWidth = viewport.offsetWidth;
+      const trackWidth = track.scrollWidth;
+
+      if (trackWidth <= viewportWidth) {
+        track.style.transform = "translateX(0px)";
+        return;
+      }
+
+      const cellCenter = activeCell.offsetLeft + activeCell.offsetWidth / 2;
+      let offset = viewportWidth / 2 - cellCenter;
+      const maxOffset = 0;
+      const minOffset = viewportWidth - trackWidth;
+
+      offset = Math.max(minOffset, Math.min(maxOffset, offset));
+      track.style.transform = `translateX(${offset}px)`;
+    }
+
+    btnRight.addEventListener("click", () => {
+      selectedIndex = (selectedIndex + 1) % cells.length;
+      updateFilmstrip();
+    });
+
+    btnLeft.addEventListener("click", () => {
+      selectedIndex = (selectedIndex - 1 + cells.length) % cells.length;
+      updateFilmstrip();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") {
+        selectedIndex = (selectedIndex + 1) % cells.length;
+        updateFilmstrip();
+      } else if (e.key === "ArrowLeft") {
+        selectedIndex = (selectedIndex - 1 + cells.length) % cells.length;
+        updateFilmstrip();
+      }
+    });
+
+    window.addEventListener("resize", updateFilmstrip);
+    updateFilmstrip();
+  </script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Programming - Jane Khoury</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      color: #ffffff;
+      min-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      /* Arrière-plan grille néon bleue */
+      background:
+        linear-gradient(rgba(56, 189, 248, 0.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.14) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, #0a2540 0%, #030914 82%);
+      background-size: 40px 40px, 40px 40px, 100% 100%;
+    }
+
+    /* --- BARRE SUPÉRIEURE --- */
+    .top-bar {
+      position: relative;
+      z-index: 50;
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(3, 10, 24, 0.78);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #e0f2fe;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-4px);
+      background: rgba(56, 189, 248, 0.22);
+    }
+
+    .top-badge {
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #7dd3fc;
+    }
+
+    /* --- LOGOS EN HAUT DU BACKGROUND (UNITY, VISUAL STUDIO, ANDROID DEVELOPERS) --- */
+    .bg-tools-bar {
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 44px;
+      pointer-events: none;
+    }
+
+    .tool-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 14px;
+      background: rgba(6, 18, 36, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.5),
+        0 0 18px rgba(56, 189, 248, 0.18);
+      backdrop-filter: blur(8px);
+      animation: float-logo 4.5s ease-in-out infinite;
+    }
+
+    .tool-badge:nth-child(2) {
+      animation-delay: -1.5s;
+    }
+
+    .tool-badge:nth-child(3) {
+      animation-delay: -3s;
+    }
+
+    @keyframes float-logo {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .tool-badge svg {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
+    }
+
+    .tool-badge span {
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: #e0f2fe;
+      white-space: nowrap;
+    }
+
+    /* --- SCÈNE CENTRALE --- */
+    main {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 68px 20px 20px;
+    }
+
+    /* --- BORNE D'ARCADE BLEU NÉON --- */
+    .arcade-cabinet {
+      width: min(820px, 94vw);
+      background: linear-gradient(180deg, #0c223f 0%, #061224 100%);
+      border: 4px solid #38bdf8;
+      border-radius: 30px 30px 18px 18px;
+      padding: 20px 28px 24px;
+      box-shadow:
+        0 0 50px rgba(56, 189, 248, 0.42),
+        inset 0 0 28px rgba(14, 165, 233, 0.32);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .arcade-marquee {
+      width: 100%;
+      text-align: center;
+      padding: 11px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #0369a1, #0ea5e9, #38bdf8, #0ea5e9, #0369a1);
+      font-weight: 900;
+      font-size: 1.2rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 0 26px rgba(56, 189, 248, 0.65);
+    }
+
+    /* --- ÉCRAN CRT AVEC LES 2 BOUTONS PRINCIPAUX --- */
+    .crt-screen {
+      position: relative;
+      width: 100%;
+      min-height: 290px;
+      border-radius: 22px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 45%, #091d36 0%, #02060d 100%);
+      border: 6px solid #040b17;
+      box-shadow: inset 0 0 36px rgba(56, 189, 248, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 22px;
+    }
+
+    /* Lignes scanlines rétro CRT */
+    .crt-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.22) 0px,
+        rgba(0, 0, 0, 0.22) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .screen-prompt {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .screen-prompt h2 {
+      margin: 0 0 6px;
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #7dd3fc;
+      text-shadow: 0 0 14px rgba(56, 189, 248, 0.65);
+    }
+
+    .screen-prompt p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #bae6fd;
+      opacity: 0.85;
+    }
+
+    /* Grille des 2 boutons : Video Games & Website */
+    .modes-grid {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+      width: 100%;
+      max-width: 660px;
+    }
+
+    .mode-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+      padding: 24px 18px;
+      border-radius: 18px;
+      text-decoration: none;
+      color: #ffffff;
+      background: rgba(14, 165, 233, 0.12);
+      border: 2px solid rgba(56, 189, 248, 0.45);
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.5),
+        inset 0 0 18px rgba(56, 189, 248, 0.15);
+      transition:
+        transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+        background 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    .mode-card:hover,
+    .mode-card.is-selected {
+      transform: translateY(-6px) scale(1.03);
+      background: rgba(14, 165, 233, 0.28);
+      border-color: #7dd3fc;
+      box-shadow:
+        0 18px 36px rgba(0, 0, 0, 0.65),
+        0 0 28px rgba(56, 189, 248, 0.6),
+        inset 0 0 22px rgba(125, 211, 252, 0.3);
+    }
+
+    .mode-icon {
+      font-size: 2.2rem;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.7));
+    }
+
+    .mode-title {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+
+    .mode-sub {
+      font-size: 0.83rem;
+      color: #bae6fd;
+      line-height: 1.4;
+    }
+
+    .mode-pill {
+      margin-top: 4px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #0ea5e9;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.76rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 0 14px rgba(14, 165, 233, 0.65);
+    }
+
+    /* --- CONSOLE DE CONTRÔLES ARCADE EN BAS --- */
+    .arcade-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .arc-btn {
+      padding: 11px 22px;
+      border-radius: 14px;
+      border: none;
+      font-weight: 900;
+      font-size: 0.88rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      color: #ffffff;
+      background: #0284c7;
+      box-shadow: 0 5px 0 #075985, 0 0 18px rgba(56, 189, 248, 0.45);
+      transition: transform 0.1s ease, background 0.2s ease;
+      text-decoration: none;
+    }
+
+    .arc-btn:hover {
+      background: #0ea5e9;
+    }
+
+    .arc-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #075985;
+    }
+
+    .arc-btn.start {
+      background: #22c55e;
+      box-shadow: 0 5px 0 #15803d, 0 0 18px rgba(34, 197, 94, 0.5);
+    }
+
+    .arc-btn.start:hover {
+      background: #4ade80;
+      color: #052e16;
+    }
+
+    .arc-btn.start:active {
+      box-shadow: 0 1px 0 #15803d;
+    }
+
+    @media (max-width: 720px) {
+      .bg-tools-bar {
+        gap: 12px;
+        top: 68px;
+      }
+      .tool-badge {
+        padding: 6px 10px;
+      }
+      .tool-badge svg {
+        width: 24px;
+        height: 24px;
+      }
+      .tool-badge span {
+        font-size: 0.74rem;
+      }
+      .modes-grid {
+        grid-template-columns: 1fr;
+      }
+      .arcade-marquee {
+        font-size: 1rem;
+        letter-spacing: 1.5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a class="back-btn" href="competences.html">← Retour aux compétences</a>
+    <span class="top-badge">💻 Programming • Jane Khoury</span>
+  </div>
+
+  <!-- LOGOS DES APPLICATIONS EN HAUT DU BACKGROUND (TAILLE NORMALE) -->
+  <div class="bg-tools-bar" aria-hidden="true">
+
+    <!-- 1. UNITY -->
+    <div class="tool-badge">
+      <svg viewBox="0 0 64 64" fill="none">
+        <path d="M49.6 15.2L32 5L14.4 15.2L18.2 21.8L28 16.1V27.5L18.1 33.2L22 39.8L32 34L42 39.8L45.9 33.2L36 27.5V16.1L45.8 21.8L49.6 15.2Z" fill="#FFFFFF"/>
+        <path d="M12.2 19.1L5 31.6L12.2 44.1L19.8 44.1L14.1 34.3L24 28.6L24 17.2L16.3 17.2L22 27L12.2 32.7L12.2 19.1Z" fill="#CBD5E1"/>
+        <path d="M51.8 19.1L51.8 32.7L42 27L47.7 17.2L40 17.2L40 28.6L49.9 34.3L44.2 44.1L51.8 44.1L59 31.6L51.8 19.1Z" fill="#94A3B8"/>
+        <path d="M15.8 47.8L32 57.2L48.2 47.8L44.4 41.2L32 48.4L19.6 41.2L15.8 47.8Z" fill="#E2E8F0"/>
+      </svg>
+      <span>Unity</span>
+    </div>
+
+    <!-- 2. VISUAL STUDIO -->
+    <div class="tool-badge">
+      <svg viewBox="0 0 64 64" fill="none">
+        <path d="M46.5 6L23.5 27.2L11.2 17.8L6 20.4V43.6L11.2 46.2L23.5 36.8L46.5 58L58 52.5V11.5L46.5 6ZM46.5 20.5V43.5L31.2 32L46.5 20.5ZM12 37.8V26.2L18.6 32L12 37.8Z" fill="#A855F7"/>
+        <path d="M46.5 6L23.5 27.2L31.2 32L46.5 20.5V6Z" fill="#C084FC"/>
+        <path d="M46.5 58L23.5 36.8L31.2 32L46.5 43.5V58Z" fill="#7E22CE"/>
+      </svg>
+      <span>Visual Studio</span>
+    </div>
+
+    <!-- 3. ANDROID DEVELOPERS -->
+    <div class="tool-badge">
+      <svg viewBox="0 0 64 64" fill="none">
+        <!-- Antennes Android -->
+        <line x1="21" y1="18" x2="15" y2="9" stroke="#3DDC84" stroke-width="3.2" stroke-linecap="round"/>
+        <line x1="43" y1="18" x2="49" y2="9" stroke="#3DDC84" stroke-width="3.2" stroke-linecap="round"/>
+        <!-- Tête Android -->
+        <path d="M12 36C12 24.4 20.9 15 32 15C43.1 15 52 24.4 52 36H12Z" fill="#3DDC84"/>
+        <!-- Yeux -->
+        <circle cx="23.5" cy="26.5" r="2.6" fill="#061224"/>
+        <circle cx="40.5" cy="26.5" r="2.6" fill="#061224"/>
+        <!-- Symbole code < > Android Developers -->
+        <path d="M23 45L17 50L23 55" stroke="#38BDF8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M41 45L47 50L41 55" stroke="#38BDF8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="34" y1="43" x2="30" y2="57" stroke="#7DD3FC" stroke-width="2.8" stroke-linecap="round"/>
+      </svg>
+      <span>Android Developers</span>
+    </div>
+
+  </div>
+
+  <main>
+    <div class="arcade-cabinet">
+      <div class="arcade-marquee">⚡ JANE'S PROGRAMMING ARCADE ⚡</div>
+
+      <div class="crt-screen">
+        <div class="screen-prompt">
+          <h2>SELECT GAME MODE</h2>
+          <p>Choisis une catégorie pour explorer mes créations codées</p>
+        </div>
+
+        <!-- LES 2 BOUTONS : VIDEO GAMES & WEBSITE -->
+        <div class="modes-grid">
+          <a class="mode-card is-selected" id="card-games" href="video-games.html">
+            <span class="mode-icon">🎮</span>
+            <span class="mode-title">Video Games</span>
+            <span class="mode-sub">Jeux navigateur, gameplay interactif, physique et animations JS/C++.</span>
+            <span class="mode-pill">Player 1 • Play →</span>
+          </a>
+
+          <a class="mode-card" id="card-web" href="website.html">
+            <span class="mode-icon">🌐</span>
+            <span class="mode-title">Website</span>
+            <span class="mode-sub">Sites web interactifs, designs 3D, interfaces modernes HTML/CSS/JS.</span>
+            <span class="mode-pill">Player 2 • Open →</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- CONTRÔLES DE LA BORNE (CLAVIER OU SOURIS) -->
+      <div class="arcade-controls">
+        <button class="arc-btn" id="btn-switch" type="button">◀ SWITCH ▶</button>
+        <a class="arc-btn start" id="btn-start" href="video-games.html">START ▶</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const cardGames = document.getElementById("card-games");
+    const cardWeb = document.getElementById("card-web");
+    const btnSwitch = document.getElementById("btn-switch");
+    const btnStart = document.getElementById("btn-start");
+
+    let selected = 0; // 0 = Video Games, 1 = Website
+
+    function updateSelection(index) {
+      selected = index;
+      cardGames.classList.toggle("is-selected", selected === 0);
+      cardWeb.classList.toggle("is-selected", selected === 1);
+      btnStart.href = selected === 0 ? "video-games.html" : "website.html";
+    }
+
+    btnSwitch.addEventListener("click", () => {
+      updateSelection(selected === 0 ? 1 : 0);
+    });
+
+    cardGames.addEventListener("mouseenter", () => updateSelection(0));
+    cardWeb.addEventListener("mouseenter", () => updateSelection(1));
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        updateSelection(selected === 0 ? 1 : 0);
+      } else if (e.key === "Enter") {
+        window.location.href = btnStart.href;
+      }
+    });
+  </script>
+</body>
+</html>
